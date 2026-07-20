@@ -21,11 +21,11 @@ const config: Config = {
   },
   themes: ['@docusaurus/theme-mermaid'],
 
-  url: 'https://g03-76b664.pages.git.inteli.edu.br',
+  url: 'https://joaocardosodias.github.io',
   baseUrl: '/Sentinela/',
 
-  organizationName: 'inteli',
-  projectName: 'g03',
+  organizationName: 'joaocardosodias',
+  projectName: 'Sentinela',
 
   onBrokenLinks: 'warn',
 
