@@ -1,0 +1,98 @@
+/**
+ * Tema personalizado — cor de destaque #ff84a4 (rosa)
+ * Variações geradas por escala HSL: hsl(345°, 100%, ...)
+ */
+
+/* ── Modo claro ─────────────────────────────────────────── */
+:root {
+  /* Primária: #ff84a4 e suas variações */
+  --ifm-color-primary:         #ff84a4;  /* base              */
+  --ifm-color-primary-dark:    #ff6b91;  /* -5% lightness     */
+  --ifm-color-primary-darker:  #ff5e87;  /* -8% lightness     */
+  --ifm-color-primary-darkest: #ff3d6e;  /* -15% lightness    */
+  --ifm-color-primary-light:   #ff9db8;  /* +5% lightness     */
+  --ifm-color-primary-lighter: #ffaac2;  /* +8% lightness     */
+  --ifm-color-primary-lightest:#ffc8d8;  /* +15% lightness    */
+
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 132, 164, 0.12);
+
+  /* Navbar clara */
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-navbar-shadow: 0 1px 0 0 rgba(255, 132, 164, 0.2);
+
+  /* Links ativos na sidebar */
+  --ifm-menu-color-active: #ff84a4;
+}
+
+/* ── Modo escuro ─────────────────────────────────────────── */
+[data-theme='dark'] {
+  /* No escuro usamos o rosa puro como destaque — contrasta bem */
+  --ifm-color-primary:         #ff84a4;
+  --ifm-color-primary-dark:    #ff6b91;
+  --ifm-color-primary-darker:  #ff5e87;
+  --ifm-color-primary-darkest: #ff3d6e;
+  --ifm-color-primary-light:   #ff9db8;
+  --ifm-color-primary-lighter: #ffaac2;
+  --ifm-color-primary-lightest:#ffc8d8;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 132, 164, 0.15);
+
+  /* Fundo da navbar escura levemente diferenciado */
+  --ifm-navbar-background-color: #1a1a1f;
+  --ifm-background-color: #111116;
+  --ifm-background-surface-color: #18181e;
+}
+
+/* ── Detalhes extras ─────────────────────────────────────── */
+
+/* Barra de progresso de leitura */
+:root {
+  --ifm-color-primary-contrast-background: rgba(255, 132, 164, 0.08);
+}
+
+/* Sublinhado de links hover */
+a:hover {
+  color: #ff84a4;
+}
+
+/* Borda lateral do item ativo na sidebar */
+.menu__link--active {
+  border-left: 3px solid #ff84a4;
+  padding-left: calc(var(--ifm-menu-link-padding-horizontal) - 3px);
+}
+
+/* Botões primários */
+.button--primary {
+  background-color: #ff84a4;
+  border-color: #ff84a4;
+}
+.button--primary:hover {
+  background-color: #ff6b91;
+  border-color: #ff6b91;
+}
+
+/* Linha de separação da navbar */
+.navbar {
+  border-bottom: 1px solid rgba(255, 132, 164, 0.25);
+  box-shadow: none;
+}
+
+/* Título da navbar com cor de destaque */
+.navbar__title {
+  color: #ff84a4;
+  font-weight: 700;
+}
+
+/* Badges de versão / tags */
+.badge {
+  background-color: rgba(255, 132, 164, 0.15);
+  color: #ff84a4;
+  border: 1px solid rgba(255, 132, 164, 0.4);
+}
+
+/* Destaque de código inline */
+code {
+  border-color: rgba(255, 132, 164, 0.3);
+  background-color: rgba(255, 132, 164, 0.07);
+}

@@ -1,0 +1,180 @@
+---
+sidebar_position: 6
+---
+
+# Investigação: 2ª Hipótese
+
+A segunda hipótese do projeto propõe que:
+
+> A probabilidade de recuperação de um veículo roubado decai exponencialmente nos primeiros 3 dias. Ao automatizar a identificação e a consulta de placas com drones, a Pier consegue atuar de forma assertiva dentro dessa "Janela de Ouro" antes da desmontagem ou clonagem, aumentando o volume de salvados, evitando o **Worst Case** — pagamento integral da indenização — e reduzindo a sinistralidade geral da carteira de seguros auto.
+
+&emsp;Tal tese funda-se no contexto da segurança pública e do mercado segurador no Brasil, particularmente no segmento automotivo, que enfrenta um desafio persistente: **a criminalidade organizada voltada para a subtração de veículos**. Para seguradoras digitais como a Pier, a eficiência na gestão de sinistros não reside apenas na agilidade do pagamento de indenizações, mas, fundamentalmente, na capacidade de mitigar a perda através da recuperação do ativo. Por isso, a seção que se segue busca fundamentar a tese da **Janela de Ouro**, investigando se a probabilidade de recuperação de um veículo furtado ou roubado sofre um decaimento agudo nas primeiras 72 horas e como a automação via drones e visão computacional pode alterar a economia dos sinistros.
+
+---
+
+# Validação da Hipótese
+
+A validação da hipótese exigiu a análise de três dimensões principais:
+
+1. **Curva temporal de recuperação**
+2. **Comportamento criminal pós-roubo**
+3. **Análise do direcionamento da operação**
+
+---
+
+## 1. Curva de Decaimento da Recuperação
+
+&emsp;A tese central deste projeto postula que a probabilidade de recuperação de um veículo decai de forma possivelmente exponencial durante os primeiros três dias após o sinistro. Evidências oriundas de empresas líderes em rastreamento e telemetria, como o [Grupo Tracker](#ref-tracker) e a [Ituran](#ref-cqcs), fornecem sustentação empírica para essa hipótese.
+
+### 1.1. A Correlação Crítica entre Tempo de Aviso e Sucesso Operacional
+
+&emsp;Dados estatísticos do [Grupo Tracker](#ref-tracker) indicam que, em 2024, **veículos pesados** que tiveram o aviso de sinistro realizado em até uma hora após o delito apresentaram uma **taxa de recuperação de 93%**. Esse dado estabelece o patamar máximo da curva de eficiência. À medida que o tempo avança, essa taxa sofre erosão devido à **movimentação do veículo**, ao possível abandono temporário, à remoção de rastreadores, à clonagem ou ao desmanche.
+
+&emsp;Embora não exista uma única tabela pública consolidada que descreva cada hora do decaimento, a análise de modelos internacionais e dados de consultorias de frotas, como a [FleetUp](#ref-fleetup), sugere que o sucesso na recuperação nas primeiras 2 a 3 horas pode chegar a 90%, mas despenca rapidamente após esse marco. No contexto brasileiro, o cruzamento de informações de mercado permite inferir a seguinte curva de probabilidade.
+
+### 1.2. Curva Inferida de Recuperação
+
+| Intervalo após o roubo | Probabilidade estimada de recuperação |
+|------------------------|---------------------------------------|
+| Menos de 1 hora | 90% – 93% |
+| 1 – 24 horas | 50% – 70% |
+| 24 – 48 horas | 30% – 45% |
+| 48 – 72 horas | 15% – 25% |
+| Mais de 7 dias | Menos de 10% |
+
+Esses valores foram inferidos a partir de:
+
+- Dados do [Grupo Tracker](#ref-tracker), com até 93% de recuperação quando o aviso ocorre em até 1 hora;
+- Estudos de telemetria e recuperação de frotas, como os materiais da [FleetUp](#ref-fleetup);
+- Dados agregados sobre recuperação de veículos em São Paulo citados em levantamentos da [Ituran](#ref-cqcs).
+
+Com base nesses dados:
+
+> Após as 72 horas, o veículo geralmente entra em uma fase de "morte civil" tecnológica, na qual o desmanche ou a clonagem tornam a recuperação economicamente inviável ou fisicamente impossível.
+
+---
+
+### 1.3. A Matemática do Risco e o Decaimento Atuarial
+
+&emsp;Para descrever e entender o fenômeno da Janela de Ouro, é necessário entender como o risco e o tempo se relacionam dentro desse contexto. Para isso, usa-se a perspectiva da ciência atuarial, especificamente a partir do estudo recente publicado no [*International Journal of Quantitative Research and Modeling*](#ref-researchgate), que utiliza um modelo recursivo para calcular a probabilidade de que o capital de uma seguradora caia abaixo de zero, caracterizando um cenário de insolvência.
+
+&emsp;Para uma seguradora, cada hora de atraso na localização do veículo aumenta a severidade esperada do sinistro de forma não linear. A severidade de um sinistro não recuperado é igual à indenização integral, ou seja, ao valor de face. Já a severidade de um sinistro recuperado é reduzida pelo valor líquido do salvado.
+
+A fórmula do custo esperado do sinistro, representado por `E[C](t)`, integra essa probabilidade temporal:
+
+$$
+E[C](t) = V_f - P(R \mid t) \cdot V_s
+$$
+
+Onde:
+
+- `P(R | t)`: probabilidade de recuperação do veículo no tempo `t`.
+- `V_f`: valor de face da indenização integral. Exemplo: valor da Tabela FIPE.
+- `V_s`: valor líquido de venda do salvado. Montante recuperado após o leilão do veículo, descontados os custos operacionais.
+
+&emsp;Apesar de focar no custo, é possível, através da relação clara entre custo e estado do veículo, compreender que **tempo é um fator crítico** na recuperação de veículos, pois está diretamente associado à redução da sinistralidade.
+
+---
+
+## 2. Comportamento Criminal e Janela de Exposição
+
+&emsp;Para validar a tese proposta, é necessário entender onde o veículo se encontra durante a Janela de Ouro. O comportamento dos criminosos no contexto nacional revela padrões que criam oportunidades específicas para a detecção aérea.
+
+### 2.1. Cooling-off: Período de Esfriamento
+
+&emsp;Como a seção anterior, acerca da tese 1, já abordou com mais profundidade, após o roubo é comum que o veículo seja abandonado temporariamente em uma zona intermediária. Nesse período, ele pode permanecer entre **24 e 48 horas** sem movimentação, sendo monitorado indiretamente pelos criminosos com o objetivo de verificar a presença de rastreadores e evitar recuperação imediata.
+
+&emsp;Esse período representa uma das **melhores oportunidades de recuperação**. Com base em dados da SSP-SP e análises recentes de segurança pública, a mancha criminal de veículos roubados em São Paulo concentra-se principalmente em regiões específicas, permitindo uma atuação mais direcionada.
+
+### 2.2. Desmanche Clandestino
+
+&emsp;Caso o veículo não seja recuperado durante o período de esfriamento, um dos destinos mais comuns é o **desmanche clandestino**. Segundo levantamentos sobre desmanches de veículos pesados no estado de São Paulo, há concentração de estruturas clandestinas associadas à desmontagem e revenda ilegal de peças [Revista Cobertura](#ref-cobertura).
+
+&emsp;Nesse cenário, o automóvel pode ser desmontado em um intervalo curto, estimado entre **50 e 80 minutos**. Após isso, as peças entram rapidamente no mercado ilegal, e o valor do ativo se torna praticamente irreversível.
+
+---
+
+## 3. Análise do Direcionamento da Operação
+
+### 3.1. Localidade
+
+&emsp;Há evidência consistente de que veículos roubados têm **maior chance de serem recuperados logo após o crime**, com redução à medida que o tempo passa. Estudos de recuperação de veículos em São Paulo indicam aumento da taxa de recuperação de veículos, de 30,5% em 2022 para 44,7% em 2024, mas isso está ligado à concentração de recursos em fluxos de tempo e espaço críticos [CQCS / Ituran](#ref-cqcs).
+
+| Região | Características principais |
+|--------|----------------------------|
+| **Zona Leste** | Alta densidade de ocorrências absolutas; bairros como São Mateus, Vila Matilde, Sapopemba e Vila Prudente; foco em roubos e furtos de veículos populares. |
+| **Centro** | Predomínio de furtos de veículos estacionados; fluxo intenso de veículos durante o dia. |
+| **Zona Sul** | Veículos de maior valor e rotas de fuga para o ABC e Litoral. |
+| **Zona Norte** | Importante para veículos pesados e rotas ligadas à Rodovia Fernão Dias, Guarulhos e entorno. |
+
+### 3.2. Períodos
+
+&emsp;Também partindo de dados recentes de segurança pública e levantamentos jornalísticos sobre roubos e furtos de veículos em São Paulo, há concentração relevante de ocorrências em determinados horários e dias da semana [R7](#ref-r7).
+
+- **55% dos roubos de automóveis em São Paulo ocorrem entre 12h e 18h**;
+- O pico de risco é mais acentuado de **terça a quinta-feira**, diferentemente do senso comum de que a maior parte dos crimes ocorre à noite.
+
+---
+
+# Conclusão
+
+&emsp;A análise dos dados da seção confirma a validade da tese da **Janela de Ouro**, evidenciando que o sucesso na recuperação de veículos é uma função inversamente proporcional ao tempo decorrido após o sinistro, com um ponto de inflexão crítico nas primeiras 72 horas.
+
+Desse modo, a lógica econômica para a Pier Seguradora é:
+
+- **Redução da severidade líquida:** a automação aumenta a taxa de recuperação em um período no qual o veículo ainda possui alto valor de salvado, reduzindo o custo médio por sinistro.
+
+- **Escalabilidade e eficiência:** o uso de drones e visão computacional reduz o gargalo da pronta resposta humana, permitindo cobrir as manchas criminais de São Paulo de forma rápida, segura e baseada em dados.
+
+- **Vantagem competitiva em sinistralidade:** em um mercado no qual os preços dos seguros são pressionados pelos custos de reparo, roubo e furto, a eficiência na recuperação permite à Pier manter prêmios competitivos e melhorar sua margem operacional.
+
+&emsp;Em suma, o problema identificado é concreto e passível de mitigação. A exploração da tese como fundamentação de uma solução tecnológica pode aumentar substancialmente as chances de recuperação do ativo.
+
+---
+
+## Referências
+
+- <span id="ref-autolist"></span>
+  **AUTOLIST.** Veículo com passagem em leilão: é um bom negócio? Disponível em: [https://www.autolist.com.br/blog/veiculo-com-passagem-em-leilao-vale-a-pena/](https://www.autolist.com.br/blog/veiculo-com-passagem-em-leilao-vale-a-pena/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-bahia"></span>
+  **BAHIA NOTÍCIAS.** Brasil tem média de um carro furtado ou roubado a cada 90 segundos; Bahia é quarto estado com mais roubos. Disponível em: [https://www.bahianoticias.com.br/noticia/292259-brasil-tem-media-de-um-carro-furtado-ou-roubado-a-cada-90-segundos-bahia-e-quarto-estado-com-mais-roubos](https://www.bahianoticias.com.br/noticia/292259-brasil-tem-media-de-um-carro-furtado-ou-roubado-a-cada-90-segundos-bahia-e-quarto-estado-com-mais-roubos). Acesso em: 29 abr. 2026.
+
+- <span id="ref-bwsiot"></span>
+  **BWS IOT.** Roubos e Furtos de Veículos no Brasil em 2022 e 2023. Disponível em: [https://bwsiot.com/roubos-e-furtos-de-veiculos-no-brasil-em-2022-e-2023/](https://bwsiot.com/roubos-e-furtos-de-veiculos-no-brasil-em-2022-e-2023/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-cqcs"></span>
+  **CQCS.** Ituran apresenta levantamento sobre queda de roubos e furtos no estado de São Paulo. Disponível em: [https://cqcs.com.br/noticia/ituran-apresenta-levantamento-sobre-queda-nos-roubos-e-furtos-no-estado-de-sao-paulo/](https://cqcs.com.br/noticia/ituran-apresenta-levantamento-sobre-queda-nos-roubos-e-furtos-no-estado-de-sao-paulo/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-fecap"></span>
+  **FECAP.** São Paulo registra, em média, quatro roubos ou furtos de caminhões por dia. Disponível em: [https://www.fecap.br/2025/10/30/sao-paulo-registra-em-media-quatro-roubos-ou-furtos-de-caminhoes-por-dia/](https://www.fecap.br/2025/10/30/sao-paulo-registra-em-media-quatro-roubos-ou-furtos-de-caminhoes-por-dia/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-fleetup"></span>
+  **FLEETUP.** Undetectable Fleet Asset Recovery. Disponível em: [https://fleetup.com/solution/undetectable-fleet-asset-recovery/](https://fleetup.com/solution/undetectable-fleet-asset-recovery/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-hdi"></span>
+  **HDI SEGUROS S.A.** Demonstrações Financeiras 2021. Disponível em: [https://estadaori.estadao.com.br/wp-content/uploads/2022/02/final-HDI-Seguros-SA___DF2021.pdf](https://estadaori.estadao.com.br/wp-content/uploads/2022/02/final-HDI-Seguros-SA___DF2021.pdf). Acesso em: 29 abr. 2026.
+
+- <span id="ref-ibpt"></span>
+  **IBPT.** Novo estudo do IBPT revela aumento no número de veículos em circulação. Disponível em: [https://www.ibpt.org.br/novo-estudo-do-ibpt-revela-aumento-no-numero-de-veiculos-em-circulacao-2/](https://www.ibpt.org.br/novo-estudo-do-ibpt-revela-aumento-no-numero-de-veiculos-em-circulacao-2/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-legismap"></span>
+  **LEGISMAP.** Seguradoras fecham 2022 com alta no faturamento e queda de sinistralidade. Disponível em: [https://legismap.com.br/component/legismap_ferramentas/?task=generatePdf.getPdf&artigo=134237&Itemid=101](https://legismap.com.br/component/legismap_ferramentas/?task=generatePdf.getPdf&artigo=134237&Itemid=101). Acesso em: 29 abr. 2026.
+
+- <span id="ref-nydcjs"></span>
+  **NEW YORK STATE. Division of Criminal Justice Services — DCJS.** 2012 MVTIF Program Annual Report. Disponível em: [https://www.criminaljustice.ny.gov/ofpa/pdfdocs/2012_MVTIF_Program_Annual_Report.pdf](https://www.criminaljustice.ny.gov/ofpa/pdfdocs/2012_MVTIF_Program_Annual_Report.pdf). Acesso em: 29 abr. 2026.
+
+- <span id="ref-r7"></span>
+  **R7.** Veja quais são os dias e horários com maior risco de roubos e furtos de veículos em SP. Disponível em: [https://noticias.r7.com/prisma/autos-carros/veja-quais-sao-os-dias-e-horarios-mais-perigosos-para-roubos-e-furtos-de-veiculos-em-sp-09122025/](https://noticias.r7.com/prisma/autos-carros/veja-quais-sao-os-dias-e-horarios-mais-perigosos-para-roubos-e-furtos-de-veiculos-em-sp-09122025/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-researchgate"></span>
+  **RESEARCHGATE.** Probability of Motor Vehicle Insurance Bankruptcy Using a Recursive Model in the Discrete Time Surplus Process. Disponível em: [https://www.researchgate.net/publication/399373665_Probability_of_Motor_Vehicle_Insurance_Bankruptcy_Using_a_Recursive_Model_in_the_Discrete_Time_Surplus_Process](https://www.researchgate.net/publication/399373665_Probability_of_Motor_Vehicle_Insurance_Bankruptcy_Using_a_Recursive_Model_in_the_Discrete_Time_Surplus_Process). Acesso em: 29 abr. 2026.
+
+- <span id="ref-cobertura"></span>
+  **REVISTA COBERTURA.** Estado de São Paulo tem 50 desmanches de veículos pesados mapeados. Disponível em: [https://www.revistacobertura.com.br/noticias/auto-servicos/estado-de-sao-paulo-tem-50-desmanches-de-veiculos-pesados-mapeados/](https://www.revistacobertura.com.br/noticias/auto-servicos/estado-de-sao-paulo-tem-50-desmanches-de-veiculos-pesados-mapeados/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-tracker"></span>
+  **REVISTA SEGURANÇA ELETRÔNICA.** Índice de recuperação de caminhões e carretas do Grupo Tracker chega a 93%. Disponível em: [https://revistasegurancaeletronica.com.br/indice-de-recuperacao-de-caminhoes-e-carretas-do-grupo-tracker-chega-a-93/](https://revistasegurancaeletronica.com.br/indice-de-recuperacao-de-caminhoes-e-carretas-do-grupo-tracker-chega-a-93/). Acesso em: 29 abr. 2026.
+
+- <span id="ref-segs"></span>
+  **SEGS.** Coleta de Salvados ajuda seguradoras a mitigar fraudes, reduzir a sinistralidade e o sinistro médio. Disponível em: [https://www.segs.com.br/seguros/274523-coleta-de-salvados-ajuda-seguradoras-a-mitigar-fraudes-reduzir-a-sinistralidade-e-o-sinistro-medio](https://www.segs.com.br/seguros/274523-coleta-de-salvados-ajuda-seguradoras-a-mitigar-fraudes-reduzir-a-sinistralidade-e-o-sinistro-medio). Acesso em: 29 abr. 2026.

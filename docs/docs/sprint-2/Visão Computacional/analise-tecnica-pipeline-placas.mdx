@@ -1,0 +1,801 @@
+---
+sidebar_position: 2
+title: Modelo de Classificação - YOLOv8n
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Versão 1: Modelo de Classificação
+
+&emsp;Esta seção apresenta o desenvolvimento do modelo de classificação de placas de veículos, amplamente 
+documentado sobre a sigla *ALPR (Automatic License Plate Recognition)*. A contribuição central da V1 está 
+em demonstrar que o sistema consegue sair de um dado bruto, como um vídeo gerado por webcam ou câmera, e gerar uma informação estruturável: 
+**placa detectada, texto reconhecido e evidência visual anotada**. Isso cria a base para a integração com drones, 
+banco de dados e API de sinistros.
+
+:::info 
+A V1 não deve ser entendida como um sistema final de ALPR, mas como a primeira camada funcional da aplicação: ela valida o caminho técnico entre captura de imagem, detecção da placa, leitura textual e geração de evidência.
+:::
+
+## Arquitetura do pipeline
+
+&emsp;A arquitetura da V1 segue uma abordagem modular em duas etapas principais:
+
+1. **Detecção da placa** com YOLO.
+2. **Reconhecimento dos caracteres** com OCR.
+
+&emsp;Essa separação é importante porque detecção e leitura são problemas diferentes. O YOLO aprende a localizar a região da placa na imagem, enquanto o OCR tenta transformar os pixels do recorte em texto.
+
+&emsp;Essa arquitetura contribui para a aplicação porque permite trocar ou melhorar cada módulo sem refazer o sistema inteiro. Por exemplo, em uma versão futura, o YOLOv8n pode ser substituído por YOLOv8s, YOLO11 ou outro detector, sem alterar necessariamente a lógica do OCR. Da mesma forma, o EasyOCR pode ser substituído por PaddleOCR ou por um OCR especializado em placas brasileiras.
+
+
+## Fine-tuning
+
+&emsp;A etapa de treinamento do modelo foi realizada no **Google Colab**, com o objetivo de adaptar um modelo YOLO pré-treinado para a tarefa específica de **detecção de placas veiculares**. Essa etapa corresponde ao processo de *fine-tuning*, no qual um modelo já treinado em bases genéricas de detecção de objetos é reaproveitado e ajustado para reconhecer uma nova classe de interesse: **a placa do veículo**.
+
+&emsp;Nesta versão inicial, o treinamento não teve como objetivo ler os caracteres da placa, mas sim localizar sua região dentro da imagem. Portanto, o resultado esperado do modelo YOLO é a geração de uma *bounding box* ao redor da placa. A leitura textual dos caracteres foi tratada posteriormente em outro código, utilizando OCR.
+
+
+
+### Organização geral do treinamento
+
+<Tabs>
+<TabItem value="bloco-1" label="Instalação das bibliotecas" default>
+
+&emsp;O primeiro bloco prepara o ambiente do Google Colab para executar o treinamento. Como o Colab inicia cada sessão em um ambiente limpo, é necessário instalar as bibliotecas principais do projeto.
+
+```python
+!pip install ultralytics
+!pip install roboflow
+```
+
+&emsp;A biblioteca `ultralytics` é usada para carregar, treinar e salvar modelos YOLO. Já a biblioteca `roboflow` permite acessar o dataset exportado no formato compatível com YOLOv8. A documentação da Ultralytics apresenta o YOLO como uma ferramenta para tarefas de visão computacional, incluindo detecção, validação, predição e exportação de modelos.
+
+
+</TabItem>
+<TabItem value="bloco-2" label="Importação das bibliotecas">
+
+&emsp;Depois da instalação, o notebook importa os módulos necessários para acessar o dataset, carregar o modelo e manipular arquivos.
+
+```python
+from ultralytics import YOLO
+from roboflow import Roboflow
+import os
+import shutil
+```
+
+| Importação | Papel no notebook |
+| --- | --- |
+| `YOLO` | Carrega o modelo pré-treinado e executa o fine-tuning. |
+| `Roboflow` | Baixa o dataset de placas. |
+| `os` | Cria e verifica diretórios e caminhos. |
+| `shutil` | Copia os pesos finais para uma pasta segura. |
+
+&emsp;Esse bloco organiza as dependências principais do treinamento. Ele separa o que será usado para modelagem (YOLO), para dados (Roboflow) e para organização dos arquivos (`os` e `shutil`).
+
+</TabItem>
+<TabItem value="bloco-3" label="Importando Database de placas">
+
+:::info 
+A database pode ser encontrada em:
+
+ **https://universe.roboflow.com/roboflow-universe-projects/license-plate-recognition-rxg4e**
+:::
+
+&emsp;O próximo bloco baixa o dataset do Roboflow no formato YOLOv8. Esse dataset contém imagens e anotações com a localização das placas.
+
+```python
+from roboflow import Roboflow
+
+rf = Roboflow(api_key="API_KEY_DO_ROBOFLOW")
+project = rf.workspace("WORKSPACE").project("PROJETO")
+version = project.version(13)
+dataset = version.download("yolov8")
+```
+
+&emsp;Ao baixar no formato `yolov8`, o Roboflow organiza os arquivos em uma estrutura esperada pelo YOLO:
+
+```text
+License-Plate-Recognition-13/
+├── train/
+│   ├── images/
+│   └── labels/
+├── valid/
+│   ├── images/
+│   └── labels/
+├── test/
+│   ├── images/
+│   └── labels/
+└── data.yaml
+```
+
+&emsp;O ponto mais importante é o arquivo `data.yaml`, porque ele informa ao YOLO onde estão as imagens de treino, validação e teste, além do nome das classes.
+
+```yaml
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['License_Plate']
+```
+
+&emsp;Nesta etapa, o dataset ensina o YOLO a encontrar a placa na imagem. Ele não ensina o modelo a ler o texto da placa. 
+
+
+
+</TabItem>
+<TabItem value="bloco-5" label="Carregamento do modelo YOLO">
+
+&emsp;Depois de preparar o dataset, o notebook carrega um modelo YOLO pré-treinado.
+
+```python
+model = YOLO("yolov8n.pt")
+```
+
+
+</TabItem>
+<TabItem value="bloco-6" label="Treinamento">
+
+&emsp;Este é o bloco principal do notebook. Ele realiza o fine-tuning do YOLO usando o dataset de placas.
+
+```python
+results = model.train(
+    data=dataset.location + "/data.yaml",
+    epochs=5,
+    imgsz=640,
+    batch=16,
+    workers=2,
+    device=0
+)
+```
+
+&emsp;O fine-tuning pega um modelo YOLO já pré-treinado e ajusta seus pesos para uma nova tarefa: detectar placas veiculares.
+
+| Parâmetro | O que faz | Impacto no projeto |
+| --- | --- | --- |
+| `data` | Caminho para o `data.yaml` | Conecta o YOLO ao dataset. |
+| `epochs=5` | Número de passagens pelo dataset | Teste inicial do treinamento. |
+| `imgsz=640` | Tamanho das imagens durante o treino | Equilibra desempenho e custo. |
+| `batch=16` | Imagens processadas por vez | Usa mais ou menos memória da GPU. |
+| `workers=2` | Processos para carregar dados | Afeta a velocidade de carregamento. |
+| `device=0` | Usa a GPU disponível | Acelera o treinamento. |
+
+&emsp;Na V1, `epochs=5` deve ser interpretado como uma configuração inicial de teste. Ele serve para validar se o treinamento funciona, se o dataset está correto e se os pesos são gerados. Para um modelo mais robusto, seria necessário testar mais épocas e acompanhar métricas como `precision`, `recall` e `mAP`. Poucas épocas ajudam a testar rapidamente, por isso usamos para essa aplicação do projeto.
+
+</TabItem>
+<TabItem value="bloco-8" label="Resultados do treinamento">
+
+&emsp;Após o treinamento, o YOLO salva automaticamente os resultados em uma pasta dentro de `runs/detect/`.
+
+```text
+runs/
+└── detect/
+    └── train/
+        ├── weights/
+        │   ├── best.pt
+        │   └── last.pt
+        ├── results.png
+        ├── confusion_matrix.png
+        └── args.yaml
+```
+
+&emsp;Os arquivos principais são:
+
+| Arquivo | Significado |
+| --- | --- |
+| `best.pt` | Melhor peso obtido durante o treinamento. |
+| `last.pt` | Peso da última época. |
+| `results.png` | Gráfico com evolução das métricas. |
+| `confusion_matrix.png` | Matriz de confusão. |
+| `args.yaml` | Parâmetros usados no treinamento. |
+
+&emsp;Para a aplicação, o arquivo mais importante é o `best.pt`, porque ele será carregado depois no código de inferência para detectar placas em vídeos.
+
+</TabItem>
+<TabItem value="bloco-9" label="Salvamento dos pesos">
+
+&emsp;Depois do treinamento, os pesos são copiados para uma pasta separada. Isso evita perder o modelo treinado e facilita seu uso em outro código.
+
+```python
+os.makedirs("saved_models", exist_ok=True)
+shutil.copy("runs/detect/train/weights/best.pt", "runs/detect/train/weights/license_plate_best.pt")
+shutil.copy("runs/detect/train/weights/last.pt", "runs/detect/train/weights/license_plate_last.pt")
+if os.path.exists("runs/detect/train/weights/license_plate_best.pt"):
+    print("Pesos salvos com sucesso!")
+```
+
+</TabItem>
+</Tabs>
+:::info 
+
+&emsp;A escolha do `YOLOv8n` para a primeira versão do modelo foi orientada pelo objetivo da Sprint 2: validar o funcionamento do pipeline de detecção de placas antes de buscar a melhor acurácia possível. Nesta etapa, o foco principal não era construir o modelo final de produção, mas comprovar que o fluxo técnico era viável: importar o dataset, realizar o *fine-tuning*, gerar os pesos treinados, detectar a região da placa em vídeo e encaminhar esse recorte para uma etapa posterior de OCR.
+
+&emsp;O `YOLOv8n` corresponde à versão *nano* da família YOLOv8, sendo a variante mais leve da arquitetura. Segundo a documentação da Ultralytics, os modelos YOLOv8 possuem diferentes tamanhos, permitindo escolher entre versões mais rápidas e versões mais precisas conforme a restrição de hardware e o objetivo da aplicação. O `YOLOv8n`, especificamente, apresenta menor custo computacional e maior velocidade de inferência, o que o torna adequado para experimentos iniciais e validação de pipeline. :contentReference[oaicite:0]{index=0}
+
+&emsp;Essa escolha também se relaciona ao uso do Google Colab. Como o ambiente de treino depende da disponibilidade de GPU em nuvem, iniciar com um modelo menor reduz o risco de erros de memória, diminui o tempo de treinamento e facilita a repetição de testes. A própria documentação da Ultralytics destaca que parâmetros como tamanho do modelo, `batch`, `imgsz`, otimizador e composição do dataset afetam diretamente velocidade, desempenho e acurácia, reforçando a necessidade de experimentação incremental. :contentReference[oaicite:1]{index=1}
+
+&emsp;No contexto da aplicação, o `YOLOv8n` contribuiu como uma escolha pragmática: permitiu gerar rapidamente um primeiro detector especializado em placas e integrá-lo ao restante do sistema. Como o OCR depende de um bom recorte da placa, a V1 precisava primeiro validar se o detector conseguia localizar a região da placa nos frames. Portanto, a função do `YOLOv8n` nesta etapa foi servir como uma base inicial para testar a arquitetura, e não como uma decisão definitiva para produção.
+
+&emsp;Além disso, o YOLOv8 já possui um ecossistema maduro, documentação ampla e suporte a diferentes tarefas de visão computacional, como detecção, segmentação, classificação, pose e tracking. Essa maturidade favorece o desenvolvimento acadêmico e experimental, pois reduz o esforço de implementação e permite que a equipe foque na lógica do projeto: detecção da placa, recorte, OCR e validação do padrão textual. 
+
+&emsp;Apesar dessas vantagens, o uso do `YOLOv8n` também possui limitações. Por ser um modelo menor, ele tende a ter menor capacidade representacional do que versões maiores, como `YOLOv8s` ou `YOLOv8m`. Isso pode ser problemático em cenários nos quais a placa aparece pequena, inclinada, borrada ou distante, como pode ocorrer em imagens capturadas por drones. Portanto, a escolha do `YOLOv8n` deve ser entendida como adequada para a V1, mas não necessariamente suficiente para uma versão robusta em ambiente real.
+
+&emsp;Modelos mais recentes, como o YOLO11, incorporam melhorias arquiteturais e podem apresentar ganhos de precisão em determinados cenários. Comparações técnicas apontam que o YOLO11 tende a oferecer maior acurácia em relação ao YOLOv8, embora a escolha entre as versões dependa das restrições de hardware, velocidade desejada e complexidade da tarefa. 
+
+
+&emsp;Portanto, a decisão de usar `YOLOv8n` na V1 foi uma escolha de engenharia voltada à prototipação: priorizou velocidade, baixo custo computacional, facilidade de treinamento e integração com o pipeline. A evolução natural do projeto não é assumir que o `YOLOv8n` é o melhor modelo, mas utilizá-lo como linha de base (*baseline*) para comparar versões futuras com métricas objetivas, como `precision`, `recall`, `mAP`, FPS e taxa de placas corretamente detectadas.
+:::
+
+## Processamento de texto
+
+&emsp;Enquanto o notebook de treinamento é responsável por gerar o modelo `license_plate_best.pt`, este código representa a etapa de inferência da aplicação. Ele utiliza o modelo treinado para detectar placas em tempo real, aplica OCR nos recortes encontrados e valida o resultado de acordo com os padrões brasileiros de placa antiga e Mercosul. Essa separação mantém o projeto modular: o treinamento do YOLO ocorre em um ambiente próprio, enquanto a leitura e validação das placas acontecem em um pipeline posterior.
+
+&emsp;Após o treinamento do modelo YOLO, o arquivo `license_plate_best.pt` passa a ser utilizado no código de inferência. Diferente do notebook de *fine-tuning*, esta etapa não treina novamente o modelo. Sua função é aplicar o detector treinado em imagens capturadas pela câmera, recortar a placa encontrada, reconhecer os caracteres com OCR e validar se o texto corresponde a um padrão brasileiro de placa.
+
+<Tabs>
+<TabItem value="infer-bloco-1" label="Importação das bibliotecas" default>
+
+&emsp;O primeiro bloco importa as bibliotecas necessárias para executar o pipeline de inferência. Nesta etapa, o código prepara os recursos para captura de vídeo, detecção com YOLO, reconhecimento óptico de caracteres, validação textual e estabilização temporal.
+
+```python
+import cv2
+import numpy as np
+from ultralytics import YOLO
+import easyocr
+import re
+import time
+from collections import defaultdict, deque
+```
+
+| Importação | Papel no código |
+| --- | --- |
+| `cv2` | Captura frames da câmera, processa imagens e desenha resultados na tela. |
+| `numpy` | Apoia operações com arrays de imagem. |
+| `YOLO` | Carrega o modelo treinado para detectar placas. |
+| `easyocr` | Realiza a leitura dos caracteres no recorte da placa. |
+| `re` | Aplica expressões regulares para validar padrões de placas. |
+| `time` | Registra o momento da detecção. |
+| `defaultdict` e `deque` | Criam histórico das últimas leituras para estabilizar o OCR. |
+
+&emsp;Essa organização separa as principais responsabilidades do pipeline: visão computacional com OpenCV, detecção com YOLO, OCR com EasyOCR e regra de negócio com regex.
+
+</TabItem>
+<TabItem value="infer-bloco-2" label="Carregamento do YOLO e OCR">
+
+&emsp;Depois das importações, o código inicializa os dois principais componentes da aplicação: o detector de placas e o leitor de texto.
+
+```python
+model = YOLO("license_plate_best.pt")
+reader = easyocr.Reader(['pt'], gpu=True)
+```
+
+&emsp;O arquivo `license_plate_best.pt` representa o melhor peso salvo após o treinamento do YOLO. Ele é usado para localizar a região da placa no frame.
+
+&emsp;O EasyOCR é inicializado com idioma `pt`, pois as placas usam caracteres alfanuméricos latinos. O parâmetro `gpu=True` tenta usar GPU para acelerar o reconhecimento, quando disponível.
+
+&emsp;O YOLO e o OCR têm funções diferentes. O YOLO detecta onde está a placa. O EasyOCR tenta ler o que está escrito na placa.
+
+</TabItem>
+<TabItem value="infer-bloco-3" label="Regex das placas brasileiras">
+
+&emsp;O código define duas expressões regulares para validar os formatos de placas brasileiras considerados na V1.
+
+```python
+old_model_br = re.compile(r"^[A-Z]{3}[0-9]{4}$")
+mercosul_model_br = re.compile(r"^[A-Z]{3}[0-9][A-Z][0-9]{2}$")
+```
+
+| Padrão | Formato | Exemplo |
+| --- | --- | --- |
+| Placa antiga brasileira | `LLLNNNN` | `ABC1234` |
+| Placa Mercosul brasileira | `LLLNLNN` | `ABC1D23` |
+
+&emsp;Essa etapa funciona como uma camada de regra de negócio. A regex não melhora a detecção visual do YOLO nem o OCR, mas ajuda a decidir se o texto reconhecido possui um formato plausível de placa brasileira.
+
+&emsp;Na aplicação, isso é importante porque evita que leituras aleatórias do OCR sejam tratadas como placas válidas.
+
+&emsp;Uma regex muito rígida pode descartar leituras quase corretas. Por isso, o código também implementa uma etapa de correção de caracteres parecidos, como `O` e `0`, `I` e `1`, `S` e `5`.
+
+</TabItem>
+<TabItem value="infer-bloco-4" label="Mapeamento de confusões do OCR">
+
+&emsp;O OCR pode confundir letras e números visualmente parecidos. Para reduzir esse problema, o código cria dois dicionários de correção.
+
+```python
+NUM_TO_ALPHA = {
+    "0": "O",
+    "1": "I",
+    "2": "Z",
+    "5": "S",
+    "8": "B",
+}
+
+ALPHA_TO_NUM = {
+    "O": "0",
+    "I": "1",
+    "Z": "2",
+    "S": "5",
+    "B": "8",
+}
+```
+
+&emsp;O primeiro dicionário converte números em letras quando a posição da placa exige uma letra. O segundo faz o inverso: converte letras em números quando a posição da placa exige um número.
+
+| Confusão comum | Correção dependendo da posição |
+| --- | --- |
+| `0` e `O` | Número vira letra ou letra vira número. |
+| `1` e `I` | Número vira letra ou letra vira número. |
+| `5` e `S` | Número vira letra ou letra vira número. |
+| `8` e `B` | Número vira letra ou letra vira número. |
+| `2` e `Z` | Número vira letra ou letra vira número. |
+
+</TabItem>
+<TabItem value="infer-bloco-5" label="Limpeza do texto OCR">
+
+&emsp;Antes de validar o texto, o código normaliza a saída do OCR. Isso evita que espaços, hífens ou caracteres estranhos atrapalhem a validação.
+
+```python
+def clean_plate_text(text):
+    text = text.upper().replace(" ", "").replace("-", "")
+    return re.sub(r"[^A-Z0-9]", "", text)
+```
+
+| Ação | Exemplo |
+| --- | --- |
+| Converte para maiúsculas | `abc1d23` → `ABC1D23` |
+| Remove espaços | `ABC 1D23` → `ABC1D23` |
+| Remove hífens | `ABC-1234` → `ABC1234` |
+| Remove caracteres inválidos | `ABC@1234` → `ABC1234` |
+
+&emsp;Essa etapa contribui para deixar o texto em um formato mais próximo do esperado pelas regex.
+
+</TabItem>
+<TabItem value="infer-bloco-6" label="Correção da placa antiga">
+
+&emsp;A função `correct_plate_format_old` valida e corrige leituras no padrão antigo brasileiro.
+
+```python
+def correct_plate_format_old(ocr_text):
+    ocr_text = clean_plate_text(ocr_text)
+    if len(ocr_text) != 7:
+        return ""
+
+    corrected = []
+
+    for i, ch in enumerate(ocr_text):
+        if i < 3:
+            if ch.isdigit() and ch in NUM_TO_ALPHA:
+                corrected.append(NUM_TO_ALPHA[ch])
+            elif ch.isalpha():
+                corrected.append(ch)
+            else:
+                return ""
+        else:
+            if ch.isdigit():
+                corrected.append(ch)
+            elif ch.isalpha() and ch in ALPHA_TO_NUM:
+                corrected.append(ALPHA_TO_NUM[ch])
+            else:
+                return ""
+
+    candidate = "".join(corrected)
+    return candidate if old_model_br.fullmatch(candidate) else ""
+```
+
+&emsp;O padrão antigo brasileiro segue a estrutura `LLLNNNN`.
+
+| Posição | Esperado |
+| --- | --- |
+| `0`, `1`, `2` | Letras |
+| `3`, `4`, `5`, `6` | Números |
+
+&emsp;Se o OCR ler `ABCI234`, por exemplo, o código pode corrigir o `I` para `1` na posição numérica. Se a placa final bater com a regex antiga, a função retorna a placa corrigida. Caso contrário, retorna vazio.
+
+</TabItem>
+<TabItem value="infer-bloco-7" label="Correção da placa Mercosul">
+
+&emsp;A função `correct_plate_format_mercosul` valida e corrige leituras no padrão Mercosul brasileiro.
+
+```python
+def correct_plate_format_mercosul(ocr_text):
+    ocr_text = clean_plate_text(ocr_text)
+    if len(ocr_text) != 7:
+        return ""
+
+    corrected = []
+
+    for i, ch in enumerate(ocr_text):
+        if i < 3 or i == 4:
+            if ch.isdigit() and ch in NUM_TO_ALPHA:
+                corrected.append(NUM_TO_ALPHA[ch])
+            elif ch.isalpha():
+                corrected.append(ch)
+            else:
+                return ""
+        else:
+            if ch.isdigit():
+                corrected.append(ch)
+            elif ch.isalpha() and ch in ALPHA_TO_NUM:
+                corrected.append(ALPHA_TO_NUM[ch])
+            else:
+                return ""
+
+    candidate = "".join(corrected)
+    return candidate if mercosul_model_br.fullmatch(candidate) else ""
+```
+
+&emsp;O padrão Mercosul brasileiro segue a estrutura `LLLNLNN`.
+
+| Posição | Esperado |
+| --- | --- |
+| `0`, `1`, `2` | Letras |
+| `3` | Número |
+| `4` | Letra |
+| `5`, `6` | Números |
+
+&emsp;Essa função é essencial para o projeto porque o padrão Mercosul está presente nas placas brasileiras atuais. Sem essa validação, o sistema poderia rejeitar placas válidas como `ABC1D23`.
+
+</TabItem>
+<TabItem value="infer-bloco-8" label="Estrutura padrão de retorno">
+
+&emsp;O código cria uma estrutura padrão para representar uma placa não reconhecida.
+
+```python
+def empty_plate_info():
+    return {
+        "plate": "",
+        "format": "UNKNOWN",
+        "raw_text": "",
+        "valid": False,
+    }
+```
+
+| Campo | Significado |
+| --- | --- |
+| `plate` | Placa corrigida e validada |
+| `format` | Tipo da placa reconhecida |
+| `raw_text` | Texto bruto ou limpo vindo do OCR |
+| `valid` | Indica se a leitura foi validada |
+
+&emsp;Essa estrutura facilita futuras integrações com banco de dados e API, porque o resultado já aparece em formato estruturado.
+
+</TabItem>
+<TabItem value="infer-bloco-9" label="Reconhecimento da placa">
+
+&emsp;A função `recognize_plate` recebe o recorte da placa feito pelo YOLO e tenta reconhecer o texto usando EasyOCR.
+
+```python
+def recognize_plate(plate_crop):
+    if plate_crop.size == 0:
+        return empty_plate_info()
+    
+    gray = cv2.cvtColor(plate_crop, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    plate_resized = cv2.resize(thresh, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+
+    best_info = empty_plate_info()
+
+    try:
+        ocr_result = reader.readtext(
+            plate_resized,
+            detail=0,
+            allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        )
+
+        for raw_text in ocr_result:
+            cleaned = clean_plate_text(raw_text)
+            if not cleaned:
+                continue
+
+            candidate = correct_plate_format_old(cleaned)
+            if candidate:
+                return {
+                    "plate": candidate,
+                    "format": "BR_OLD",
+                    "raw_text": cleaned,
+                    "valid": True,
+                }
+
+            candidate = correct_plate_format_mercosul(cleaned)
+            if candidate:
+                return {
+                    "plate": candidate,
+                    "format": "BR_MERCOSUL",
+                    "raw_text": cleaned,
+                    "valid": True,
+                }
+    except:
+        pass
+
+    return best_info
+```
+
+| Etapa | Função |
+| --- | --- |
+| Verificação do recorte | Evita processar imagem vazia |
+| Pré-processamento | Converte para cinza, binariza e amplia |
+| OCR | Lê caracteres com EasyOCR |
+| Validação | Testa placa antiga e Mercosul |
+
+&emsp;O `allowlist` restringe o OCR a letras maiúsculas e números.
+
+&emsp;O uso de `cv2.threshold` com Otsu busca transformar a imagem em uma versão binária, separando texto e fundo.
+
+&emsp;O bloco `except: pass` evita que o programa pare em caso de erro, mas também esconde o motivo da falha. Em uma versão futura, o ideal seria registrar o erro com `print`, `logging` ou salvar em arquivo de log.
+
+</TabItem>
+<TabItem value="infer-bloco-10" label="Histórico e estabilização">
+
+&emsp;Como o OCR pode variar de um frame para outro, o código cria um histórico das últimas leituras e usa votação para estabilizar o resultado.
+
+```python
+plate_history = defaultdict(lambda: deque(maxlen=10))
+plate_final = {}
+```
+
+&emsp;A função `get_box_id` cria um identificador aproximado para a região detectada, usando as coordenadas da caixa.
+
+```python
+def get_box_id(x1, y1, x2, y2):
+    return f"{int(x1/10)}_{int(y1/10)}_{int(x2/10)}_{int(y2/10)}"
+```
+
+&emsp;Depois, `get_stable_plate_info` seleciona a placa mais frequente no histórico.
+
+```python
+def get_stable_plate_info(box_id, plate_info):
+    if plate_info["valid"]:
+        plate_history[box_id].append(plate_info)
+
+        plates = [item["plate"] for item in plate_history[box_id] if item["plate"]]
+        if plates:
+            most_common_plate = max(set(plates), key=plates.count)
+
+            for item in reversed(plate_history[box_id]):
+                if item["plate"] == most_common_plate:
+                    plate_final[box_id] = {
+                        "plate": most_common_plate,
+                        "format": item["format"],
+                        "raw_text": item["raw_text"],
+                        "valid": True,
+                    }
+                    break
+
+    return plate_final.get(box_id, empty_plate_info())
+```
+
+&emsp;Essa estratégia reduz oscilações do OCR. Por exemplo, se em vários frames a placa aparece como `ABC1234`, mas em um frame aparece como `A8C1234`, a votação tende a manter o resultado mais frequente.
+
+&emsp;Na V1, o ID da placa é baseado nas coordenadas da caixa. Isso funciona como solução simples, mas pode falhar se o veículo se mover muito ou se houver mais de uma placa próxima. Em uma versão futura, o ideal seria usar um rastreador como ByteTrack ou BoT-SORT.
+
+</TabItem>
+<TabItem value="infer-bloco-11" label="Captura da câmera">
+
+&emsp;O código utiliza a câmera padrão do computador como entrada de vídeo.
+
+```python
+input_video = 0
+
+cap = cv2.VideoCapture(input_video)
+if not cap.isOpened():
+    raise RuntimeError("Nao foi possivel abrir a camera.")
+```
+
+&emsp;O valor `0` indica a webcam padrão.
+
+&emsp;Essa etapa conecta o modelo à entrada visual da aplicação. Na V1, a câmera local simula o fluxo que futuramente pode vir de uma câmera embarcada, drone ou stream de vídeo.
+
+</TabItem>
+<TabItem value="infer-bloco-12" label="Loop frame a frame">
+
+&emsp;Depois de abrir a câmera, o código entra em um loop para processar cada frame capturado.
+
+```python
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    frame_results = []
+
+    results = model(frame, verbose=False)
+```
+
+```text
+captura um frame
+→ executa o YOLO
+→ recebe as detecções
+→ processa as placas encontradas
+```
+
+&emsp;Esse modelo frame a frame é simples e adequado para a V1. Ele permite testar a aplicação em tempo real, observar os resultados visualmente e validar o comportamento do detector.
+
+</TabItem>
+<TabItem value="infer-bloco-13" label="Filtragem por confiança">
+
+&emsp;Para evitar processar detecções muito incertas, o código define um limiar mínimo de confiança.
+
+```python
+CONF_THRESH = 0.3
+```
+
+&emsp;Depois, dentro do loop, cada caixa detectada é filtrada:
+
+```python
+conf = float(box.conf.item())
+if conf < CONF_THRESH:
+    continue
+```
+
+| Valor do limiar | Possível efeito |
+| --- | --- |
+| Muito baixo | Mais detecções, mas mais falsos positivos |
+| Muito alto | Menos falsos positivos, mas pode perder placas reais |
+| `0.3` | Valor inicial para teste da V1 |
+
+&emsp;Esse valor deve ser ajustado com base em testes reais. Para uma aplicação de recuperação veicular, perder uma placa pode ser mais grave do que gerar uma falsa detecção, então o limiar deve ser calibrado com cuidado.
+
+</TabItem>
+<TabItem value="infer-bloco-14" label="Recorte da placa">
+
+&emsp;Depois de filtrar a detecção, o código extrai as coordenadas da caixa e recorta a placa do frame.
+
+```python
+x1, y1, x2, y2 = map(int, box.xyxy.cpu().numpy()[0])
+plate_crop = frame[y1:y2, x1:x2]
+```
+
+&emsp;As coordenadas `x1`, `y1`, `x2`, `y2` definem os cantos da caixa delimitadora. O recorte `plate_crop` é a região da imagem que será enviada para o OCR.
+
+&emsp;Essa etapa é central no pipeline, porque o OCR não é aplicado na imagem inteira. Ele é aplicado apenas na região onde o YOLO encontrou a placa, reduzindo ruído e custo computacional.
+
+</TabItem>
+<TabItem value="infer-bloco-15" label="OCR e validação">
+
+&emsp;Após o recorte, o código chama a função de reconhecimento.
+
+```python
+plate_info = recognize_plate(plate_crop)
+text = plate_info["plate"]
+plate_format = plate_info["format"]
+```
+
+&emsp;O retorno é um dicionário estruturado, por exemplo:
+
+```python
+{
+    "plate": "ABC1D23",
+    "format": "BR_MERCOSUL",
+    "raw_text": "ABC1D23",
+    "valid": True
+}
+```
+
+&emsp;Esse formato é importante porque a aplicação não precisa apenas do texto da placa. Ela também precisa saber se o texto é válido, qual padrão foi reconhecido e qual foi a leitura bruta do OCR.
+
+</TabItem>
+<TabItem value="infer-bloco-16" label="Registro do resultado">
+
+&emsp;Depois da leitura e estabilização, o código monta um dicionário com as informações da detecção.
+
+```python
+result_info = {
+    "plate": stable_text or text,
+    "format": stable_format if stable_text else plate_format,
+    "raw_text": plate_info["raw_text"],
+    "valid": stable_info["valid"] or plate_info["valid"],
+    "confidence": conf,
+    "bbox": [x1, y1, x2, y2],
+    "timestamp": time.time(),
+}
+frame_results.append(result_info)
+```
+
+| Campo | Contribuição para a aplicação |
+| --- | --- |
+| `plate` | Placa reconhecida e validada |
+| `format` | Identifica se é placa antiga ou Mercosul |
+| `raw_text` | Guarda a leitura original do OCR |
+| `valid` | Indica se passou pelas regras de validação |
+| `confidence` | Guarda a confiança do YOLO |
+| `bbox` | Preserva a localização da placa no frame |
+| `timestamp` | Registra o momento da detecção |
+
+&emsp;Na V1, o resultado é impresso no terminal. Em versões futuras, pode ser salvo em CSV, JSON ou banco de dados.
+
+</TabItem>
+<TabItem value="infer-bloco-17" label="Anotação visual">
+
+&emsp;O código desenha a caixa da placa no frame e escreve o texto reconhecido acima da detecção.
+
+```python
+cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+```
+
+&emsp;Depois, se houver uma placa reconhecida, o texto é desenhado na imagem:
+
+```python
+if stable_text:
+    label = f"{stable_text} | {stable_format}"
+elif text:
+    label = f"{text} | {plate_format}"
+else:
+    label = ""
+
+cv2.putText(
+    frame,
+    label,
+    (x1, text_y),
+    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 0), 4
+)
+
+cv2.putText(
+    frame,
+    label,
+    (x1, text_y),
+    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2
+)
+```
+
+&emsp;O texto é desenhado duas vezes: primeiro em preto, como contorno, e depois em branco, para melhorar a leitura visual.
+
+&emsp;Essa etapa contribui para auditoria e validação humana, pois permite verificar visualmente se a placa reconhecida corresponde à placa mostrada na câmera.
+
+</TabItem>
+<TabItem value="infer-bloco-18" label="Exibição e encerramento">
+
+&emsp;O frame anotado é exibido em uma janela usando OpenCV.
+
+```python
+cv2.imshow("Annotated Video", frame)
+if cv2.waitKey(1) & 0xFF == ord('q'):
+    break
+```
+
+&emsp;O usuário pode encerrar o programa pressionando `q`. Ao final, a câmera é liberada e as janelas são fechadas.
+
+```python
+cap.release()
+cv2.destroyAllWindows()
+```
+
+&emsp;Essa etapa é importante para evitar que a câmera continue ocupada após o encerramento do programa.
+
+&emsp;`cv2.imshow` funciona em ambiente local com interface gráfica, mas pode falhar no Google Colab. Se o código for executado em notebook, o ideal é salvar frames ou usar métodos próprios de exibição do Colab.
+
+</TabItem>
+</Tabs>
+
+## Limitações da V1
+
+&emsp;A versão atual já valida o fluxo principal da aplicação, mas ainda possui limitações técnicas.
+
+| Limitação | Impacto |
+| --- | --- |
+| Usa pseudo-ID por coordenadas | Pode falhar com movimento intenso |
+| `except: pass` | Esconde erros do OCR |
+| OCR roda a cada detecção | Pode ficar pesado em tempo real |
+| Não salva em banco | Os dados ainda não são persistidos |
+| Não consulta API | Ainda não verifica sinistro, roubo ou furto |
+| Sem tracking real | A estabilidade depende da posição da caixa |
+
+&emsp;Essas limitações não invalidam a V1. Elas mostram que o código já serve como prova de conceito, mas ainda precisa evoluir para se tornar um sistema operacional robusto.
+
+## Melhorias futuras
+
+&emsp;Para evoluir a aplicação, algumas melhorias podem ser priorizadas.
+
+| Melhoria | Contribuição esperada |
+| --- | --- |
+| Substituir pseudo-ID por tracking | Manter a identidade da placa ao longo dos frames |
+| Registrar erros no OCR | Facilitar depuração |
+| Processar OCR a cada N frames | Reduzir custo computacional |
+| Adicionar score sistêmico | Combinar confiança YOLO, OCR e histórico |
+| Integrar GPS e timestamp real | Preparar uso com drone |
+| Consultar API de sinistros | Transformar leitura em alerta operacional |
+| Criar modo arquivo ou câmera | Permitir entrada por vídeo salvo ou webcam |
+
+&emsp;A evolução natural do código é sair de um script local de webcam para um módulo de inferência reutilizável, capaz de receber diferentes fontes de vídeo, registrar evidências e enviar placas validadas para sistemas externos.
+

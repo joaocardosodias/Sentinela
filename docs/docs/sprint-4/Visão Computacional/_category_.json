@@ -1,0 +1,8 @@
+{
+  "label": "Visão Computacional",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Documentação da Sprint 4 para a pipeline de OCR em runtime com câmera."
+  }
+}

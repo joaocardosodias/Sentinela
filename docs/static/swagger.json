@@ -1,0 +1,1697 @@
+{
+  "definitions": {},
+  "info": {
+    "description": "Documenta\u00e7\u00e3o autom\u00e1tica das rotas do sistema com arquitetura DDD e SQL Puro.",
+    "title": "Documenta\u00e7\u00e3o da API - Projeto g03",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "description": "N\u00e3o exige token. Recebe email e senha, e devolve o token de acesso.<br/>",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "email": {
+                  "example": "maria@empresa.com",
+                  "type": "string"
+                },
+                "password": {
+                  "example": "senha_segura123",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "email",
+                "password"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login bem-sucedido, token retornado",
+            "schema": {
+              "properties": {
+                "message": {
+                  "example": "Login realizado com sucesso!",
+                  "type": "string"
+                },
+                "role": {
+                  "example": "gestor_remoto",
+                  "type": "string"
+                },
+                "token": {
+                  "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "Campos obrigat\u00f3rios ausentes ou formato inv\u00e1lido"
+          },
+          "401": {
+            "description": "E-mail ou senha incorretos"
+          }
+        },
+        "summary": "Autentica um usu\u00e1rio e retorna o token JWT",
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "description": "Rota protegida: apenas gestores remotos autenticados podem criar novos usu\u00e1rios.<br/>",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "email": {
+                  "example": "maria@empresa.com",
+                  "type": "string"
+                },
+                "name": {
+                  "example": "Maria Souza",
+                  "type": "string"
+                },
+                "password": {
+                  "example": "senha_segura123",
+                  "type": "string"
+                },
+                "role": {
+                  "description": "Opcional. Se omitido, o usu\u00e1rio ser\u00e1 criado como gestor_local.",
+                  "example": "gestor_local",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "email",
+                "password"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Usu\u00e1rio criado com sucesso",
+            "schema": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos ou e-mail j\u00e1 cadastrado"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "403": {
+            "description": "Apenas gestores remotos podem cadastrar usu\u00e1rios"
+          },
+          "500": {
+            "description": "Erro interno ao criar o usu\u00e1rio"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Cadastra um novo usu\u00e1rio no sistema",
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ]
+      }
+    },
+    "/api/drones/": {
+      "get": {
+        "parameters": [
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          },
+          {
+            "description": "Filtrar por opera\u00e7\u00e3o",
+            "in": "query",
+            "name": "operacao_id",
+            "type": "string"
+          },
+          {
+            "description": "em_voo | pousado | offline | manutencao",
+            "in": "query",
+            "name": "status_voo",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de drones"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todos os drones com filtros opcionais",
+        "tags": [
+          "Drones"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "bateria": {
+                  "example": 100,
+                  "type": "integer"
+                },
+                "conectividade": {
+                  "example": "4G",
+                  "type": "string"
+                },
+                "latitude": {
+                  "example": -23.5505,
+                  "type": "number"
+                },
+                "longitude": {
+                  "example": -46.6333,
+                  "type": "number"
+                },
+                "nome": {
+                  "example": "Drone Alpha",
+                  "type": "string"
+                },
+                "operacao_id": {
+                  "type": "string"
+                },
+                "status_voo": {
+                  "example": "pousado",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operacao_id",
+                "nome",
+                "status_voo"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Drone criado com sucesso"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Adiciona um novo drone a uma opera\u00e7\u00e3o",
+        "tags": [
+          "Drones"
+        ]
+      }
+    },
+    "/api/drones/em-voo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Lista de drones em voo"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista apenas drones atualmente em voo",
+        "tags": [
+          "Drones"
+        ]
+      }
+    },
+    "/api/drones/{did}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drone removido"
+          },
+          "404": {
+            "description": "Drone n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Remove um drone do sistema",
+        "tags": [
+          "Drones"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do drone"
+          },
+          "404": {
+            "description": "Drone n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca um drone pelo UUID",
+        "tags": [
+          "Drones"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "properties": {
+                "bateria": {
+                  "type": "integer"
+                },
+                "conectividade": {
+                  "type": "string"
+                },
+                "nome": {
+                  "type": "string"
+                },
+                "status_voo": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drone atualizado"
+          },
+          "404": {
+            "description": "Drone n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Atualiza os dados de um drone",
+        "tags": [
+          "Drones"
+        ]
+      }
+    },
+    "/api/drones/{did}/localizacao": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "bateria": {
+                  "example": 85,
+                  "type": "integer"
+                },
+                "latitude": {
+                  "example": -23.5505,
+                  "type": "number"
+                },
+                "longitude": {
+                  "example": -46.6333,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Localiza\u00e7\u00e3o atualizada"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          },
+          "404": {
+            "description": "Drone n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Atualiza a localiza\u00e7\u00e3o e bateria de um drone em tempo real",
+        "tags": [
+          "Drones"
+        ]
+      }
+    },
+    "/api/drones/{did}/scans": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de scans do drone"
+          },
+          "404": {
+            "description": "Drone n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todos os scans realizados por um drone espec\u00edfico",
+        "tags": [
+          "Drones"
+        ]
+      }
+    },
+    "/api/operacoes/": {
+      "get": {
+        "parameters": [
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          },
+          {
+            "description": "Filtrar por status: ativa, pausada, encerrada",
+            "in": "query",
+            "name": "status",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de opera\u00e7\u00f5es"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todas as opera\u00e7\u00f5es com pagina\u00e7\u00e3o e filtro por status",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "created_at": {
+                  "example": "2024-03-15T08:00:00",
+                  "type": "string"
+                },
+                "localizacao": {
+                  "example": "Avenida Paulista, SP",
+                  "type": "string"
+                },
+                "name": {
+                  "example": "Opera\u00e7\u00e3o Centro",
+                  "type": "string"
+                },
+                "status": {
+                  "example": "ativa",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "status",
+                "localizacao",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Opera\u00e7\u00e3o criada com sucesso"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Cria uma nova opera\u00e7\u00e3o de campo",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      }
+    },
+    "/api/operacoes/{oid}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "oid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Opera\u00e7\u00e3o removida"
+          },
+          "404": {
+            "description": "Opera\u00e7\u00e3o n\u00e3o encontrada"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Remove uma opera\u00e7\u00e3o (e em cascata todos seus drones e scans)",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "oid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados da opera\u00e7\u00e3o"
+          },
+          "404": {
+            "description": "Opera\u00e7\u00e3o n\u00e3o encontrada"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca uma opera\u00e7\u00e3o pelo UUID",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "oid",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "properties": {
+                "localizacao": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "description": "ativa | pausada | encerrada",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Opera\u00e7\u00e3o atualizada"
+          },
+          "404": {
+            "description": "Opera\u00e7\u00e3o n\u00e3o encontrada"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Atualiza nome e/ou status de uma opera\u00e7\u00e3o",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      }
+    },
+    "/api/operacoes/{oid}/drones": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "oid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de drones da opera\u00e7\u00e3o"
+          },
+          "404": {
+            "description": "Opera\u00e7\u00e3o n\u00e3o encontrada"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todos os drones de uma opera\u00e7\u00e3o espec\u00edfica",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      }
+    },
+    "/api/operacoes/{oid}/status": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "oid",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "status": {
+                  "example": "encerrada",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status atualizado"
+          },
+          "400": {
+            "description": "Status inv\u00e1lido"
+          },
+          "404": {
+            "description": "Opera\u00e7\u00e3o n\u00e3o encontrada"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Muda o status de uma opera\u00e7\u00e3o (atalho r\u00e1pido)",
+        "tags": [
+          "Opera\u00e7\u00f5es"
+        ]
+      }
+    },
+    "/api/scans/": {
+      "get": {
+        "parameters": [
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          },
+          {
+            "description": "pendente | aprovado | rejeitado | limpo",
+            "in": "query",
+            "name": "status",
+            "type": "string"
+          },
+          {
+            "description": "Filtrar por se houve match com ve\u00edculo roubado",
+            "in": "query",
+            "name": "match",
+            "type": "boolean"
+          },
+          {
+            "description": "UUID do drone",
+            "in": "query",
+            "name": "drone_id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de scans"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todos os scans com filtros e pagina\u00e7\u00e3o",
+        "tags": [
+          "Scans"
+        ]
+      },
+      "post": {
+        "description": "Rota usada pelo firmware do drone ou pelo sistema de processamento de imagem.<br/>",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "id_drone": {
+                  "type": "string"
+                },
+                "imagem_url": {
+                  "example": "https://storage.exemplo.com/scans/img123.jpg",
+                  "type": "string"
+                },
+                "latitude": {
+                  "example": -23.5505,
+                  "type": "number"
+                },
+                "longitude": {
+                  "example": -46.6333,
+                  "type": "number"
+                },
+                "match": {
+                  "example": true,
+                  "type": "boolean"
+                },
+                "placa": {
+                  "example": "ABC1D23",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id_drone",
+                "placa",
+                "match"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Scan registrado com sucesso"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Registra um novo scan realizado por um drone",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/historico/usuario/{uid}": {
+      "get": {
+        "parameters": [
+          {
+            "description": "UUID do usu\u00e1rio",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hist\u00f3rico de a\u00e7\u00f5es do usu\u00e1rio"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista o hist\u00f3rico de a\u00e7\u00f5es realizadas por um usu\u00e1rio em scans",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/matches": {
+      "get": {
+        "parameters": [
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de scans com match"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista scans onde houve correspond\u00eancia com ve\u00edculo roubado",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/pendentes": {
+      "get": {
+        "parameters": [
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de scans pendentes"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista scans aguardando valida\u00e7\u00e3o humana (os mais antigos primeiro)",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/{sid}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scan removido"
+          },
+          "404": {
+            "description": "Scan n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Remove um scan do sistema",
+        "tags": [
+          "Scans"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do scan"
+          },
+          "404": {
+            "description": "Scan n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca um scan pelo UUID",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/{sid}/validar": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "status_validacao": {
+                  "description": "aprovado | rejeitado | limpo",
+                  "example": "aprovado",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status_validacao"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scan validado com sucesso"
+          },
+          "400": {
+            "description": "Status inv\u00e1lido"
+          },
+          "404": {
+            "description": "Scan n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Valida (aprova, rejeita ou marca como limpo) um scan pendente",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/{sid}/veiculos": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ve\u00edculos relacionados ao scan"
+          },
+          "404": {
+            "description": "Scan n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista os ve\u00edculos vinculados a um scan",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/scans/{sid}/vincular-veiculo": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "veiculo_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "veiculo_id"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ve\u00edculo vinculado ao scan"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Vincula um ve\u00edculo a um scan (tabela veiculos_scans)",
+        "tags": [
+          "Scans"
+        ]
+      }
+    },
+    "/api/users/": {
+      "get": {
+        "description": "Suporta pagina\u00e7\u00e3o e filtro por cargo. Acesso restrito a gestores remotos.<br/>",
+        "parameters": [
+          {
+            "default": 1,
+            "description": "N\u00famero da p\u00e1gina",
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "description": "Quantidade de registros por p\u00e1gina (m\u00e1x. 100)",
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          },
+          {
+            "description": "Filtrar por cargo (ex: gestor_local, gestor_remoto)",
+            "in": "query",
+            "name": "role",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada de usu\u00e1rios"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "403": {
+            "description": "Cargo insuficiente"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todos os usu\u00e1rios do sistema",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "description": "Qualquer usu\u00e1rio com token v\u00e1lido pode ver o pr\u00f3prio perfil.<br/>",
+        "responses": {
+          "200": {
+            "description": "Dados do usu\u00e1rio logado"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "404": {
+            "description": "Usu\u00e1rio n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Retorna os dados do usu\u00e1rio autenticado",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      }
+    },
+    "/api/users/me/password": {
+      "patch": {
+        "description": "Exige a senha atual para confirmar a opera\u00e7\u00e3o.<br/>",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "new_password": {
+                  "example": "nova_senha_forte456",
+                  "type": "string"
+                },
+                "old_password": {
+                  "example": "senha_antiga123",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "old_password",
+                "new_password"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Senha alterada com sucesso"
+          },
+          "400": {
+            "description": "Senha atual incorreta ou nova senha inv\u00e1lida"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Atualiza a senha do pr\u00f3prio usu\u00e1rio autenticado",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      }
+    },
+    "/api/users/search": {
+      "get": {
+        "description": "Realiza uma busca case-insensitive pelo nome informado.<br/>",
+        "parameters": [
+          {
+            "description": "Termo de busca (m\u00ednimo 2 caracteres)",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usu\u00e1rios encontrados"
+          },
+          "400": {
+            "description": "Par\u00e2metro de busca inv\u00e1lido"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "403": {
+            "description": "Cargo insuficiente"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca usu\u00e1rios pelo nome (parcial)",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      }
+    },
+    "/api/users/{user_id}": {
+      "delete": {
+        "description": "Esta a\u00e7\u00e3o \u00e9 irrevers\u00edvel. Restrita a gestores remotos.<br/>",
+        "parameters": [
+          {
+            "description": "UUID do usu\u00e1rio a ser removido",
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usu\u00e1rio removido com sucesso"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "403": {
+            "description": "Cargo insuficiente"
+          },
+          "404": {
+            "description": "Usu\u00e1rio n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Remove um usu\u00e1rio do sistema permanentemente",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "description": "UUID do usu\u00e1rio",
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do usu\u00e1rio encontrado"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "403": {
+            "description": "Cargo insuficiente"
+          },
+          "404": {
+            "description": "Usu\u00e1rio n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca um usu\u00e1rio pelo seu UUID",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      },
+      "patch": {
+        "description": "Apenas gestores remotos ou gestores locais podem alterar dados de outros usu\u00e1rios.<br/>",
+        "parameters": [
+          {
+            "description": "UUID do usu\u00e1rio a ser atualizado",
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "properties": {
+                "name": {
+                  "example": "Jo\u00e3o Silva Atualizado",
+                  "type": "string"
+                },
+                "role": {
+                  "example": "gestor_remoto",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usu\u00e1rio atualizado com sucesso"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          },
+          "401": {
+            "description": "Token JWT ausente ou inv\u00e1lido"
+          },
+          "403": {
+            "description": "Cargo insuficiente"
+          },
+          "404": {
+            "description": "Usu\u00e1rio n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Atualiza os dados de um usu\u00e1rio (name e/ou role)",
+        "tags": [
+          "Usu\u00e1rios"
+        ]
+      }
+    },
+    "/api/veiculos/": {
+      "get": {
+        "parameters": [
+          {
+            "default": 1,
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "default": 20,
+            "in": "query",
+            "name": "per_page",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "roubado",
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de ve\u00edculos"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista todos os ve\u00edculos com pagina\u00e7\u00e3o e filtro por situa\u00e7\u00e3o de roubo",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "properties": {
+                "cor": {
+                  "example": "Branco",
+                  "type": "string"
+                },
+                "data_roubo": {
+                  "example": "2024-03-15T10:30:00",
+                  "type": "string"
+                },
+                "modelo": {
+                  "example": "Fiat Uno",
+                  "type": "string"
+                },
+                "placa": {
+                  "example": "ABC1D23",
+                  "type": "string"
+                },
+                "roubado": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "placa",
+                "modelo",
+                "cor",
+                "roubado",
+                "data_roubo"
+              ],
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ve\u00edculo criado com sucesso"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Cadastra um novo ve\u00edculo no sistema",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      }
+    },
+    "/api/veiculos/placa/{placa}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "placa",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do ve\u00edculo"
+          },
+          "404": {
+            "description": "Ve\u00edculo n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca um ve\u00edculo pela placa exata",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      }
+    },
+    "/api/veiculos/roubados": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Lista de ve\u00edculos roubados"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Lista apenas ve\u00edculos marcados como roubados",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      }
+    },
+    "/api/veiculos/search": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados da busca"
+          },
+          "400": {
+            "description": "Par\u00e2metro inv\u00e1lido"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca ve\u00edculos por placa, modelo ou cor (parcial, case-insensitive)",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      }
+    },
+    "/api/veiculos/{vid}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ve\u00edculo removido"
+          },
+          "404": {
+            "description": "Ve\u00edculo n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Remove um ve\u00edculo do sistema",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vid",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do ve\u00edculo"
+          },
+          "404": {
+            "description": "Ve\u00edculo n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Busca um ve\u00edculo pelo UUID",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vid",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "properties": {
+                "cor": {
+                  "type": "string"
+                },
+                "data_roubo": {
+                  "type": "string"
+                },
+                "modelo": {
+                  "type": "string"
+                },
+                "roubado": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ve\u00edculo atualizado"
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos"
+          },
+          "404": {
+            "description": "Ve\u00edculo n\u00e3o encontrado"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Atualiza os dados de um ve\u00edculo",
+        "tags": [
+          "Ve\u00edculos"
+        ]
+      }
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "description": "Insira o token JWT no formato: Bearer {seu_token}",
+      "in": "header",
+      "name": "Authorization",
+      "type": "apiKey"
+    }
+  },
+  "swagger": "2.0"
+}

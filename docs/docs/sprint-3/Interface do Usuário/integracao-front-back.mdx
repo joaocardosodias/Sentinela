@@ -1,0 +1,248 @@
+---
+sidebar_position: 2
+title: Integração Frontend-Backend
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Integração Frontend-Backend
+
+&emsp;Este documento complementa a documentação principal do frontend descrita em [Frontend](./frontend.md). O objetivo aqui é registrar **como a interface deixou de operar apenas com estados locais** e passou a consumir o backend real.
+
+:::info
+Esta etapa documenta apenas a integração já implementada entre autenticação, alertas ativos, validação de scans e consumo inicial da tela de confirmados. Pontos como logs completos, imagens servidas por arquivo físico e limpeza final de placeholders permanecem como continuidade da Sprint 3.
+:::
+
+## Visão geral do fluxo
+
+&emsp;No fluxo atual, a interação entre frontend e backend ocorre da seguinte forma:
+
+```text
+Login real
+   ↓
+POST /api/auth/login
+   ↓
+token salvo no localStorage
+   ↓
+GET /api/scans/matches
+   ↓
+filtro local: match === true e status_validacao === "pendente"
+   ↓
+PATCH /api/scans/{sid}/validar
+   ↓
+recarregamento da lista de alertas
+   ↓
+tela de confirmados consome os scans aprovados
+```
+
+## Arquivos principais
+
+| Arquivo | Papel na integração |
+| --- | --- |
+| `src/frontend/src/services/api.js` | Centraliza base URL, token e chamadas HTTP. |
+| `src/frontend/src/screens/Login.jsx` | Faz autenticação real e persiste `token` e `role`. |
+| `src/frontend/src/screens/AlertCenter.jsx` | Busca matches positivos pendentes e executa aprovação ou rejeição. |
+| `src/frontend/src/screens/AcceptedVehicles.jsx` | Consome os scans aprovados e exibe a evidência visual quando disponível. |
+| `src/backend/app/routes/scan_route.py` | Expõe o endpoint `PATCH /api/scans/{sid}/validar`. |
+
+## Camada de API
+
+&emsp;A primeira etapa da integração foi criar uma camada de acesso à API no frontend. Isso evitou espalhar `fetch` e headers manuais entre várias telas e concentrou o uso do JWT em um único ponto.
+
+```js
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+
+function getStoredToken() {
+  return localStorage.getItem('token')
+}
+
+async function request(path, options = {}) {
+  const headers = new Headers(options.headers || {})
+  const token = getStoredToken()
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+  })
+
+  return response.json()
+}
+```
+
+&emsp;A partir desse arquivo foram expostas as funções que sustentam o fluxo da task:
+
+```js
+export async function login(email, password) { ... }
+export async function getScanMatches() { ... }
+export async function validarScan(scanId, statusValidacao) { ... }
+```
+
+## Login com backend
+
+&emsp;A tela de login deixou de apenas trocar a tela corrente e passou a autenticar contra o backend. O retorno do endpoint inclui `token` e `role`, que são persistidos no navegador para as próximas requisições.
+
+```js
+const data = await loginRequest(email, password)
+localStorage.setItem('token', data.token)
+localStorage.setItem('role', data.role)
+onLogin(data.role === 'gestor_local' ? 'operations' : 'alerts')
+```
+
+&emsp;Na prática, isso permitiu que a `Central de Alertas` e as demais telas consumissem rotas protegidas com `Authorization: Bearer <token>`.
+
+## Central de Alertas
+
+&emsp;A integração do `AlertCenter` substituiu a antiga fonte local de alertas por dados reais do endpoint `GET /api/scans/matches`. Como esse endpoint retorna todos os matches positivos, o filtro de pendência continua sendo feito no frontend.
+
+```js
+const data = await getScanMatches()
+const rawScans = Array.isArray(data) ? data : data?.scans || []
+const pendingMatches = rawScans
+  .filter((scan) => scan.match === true && scan.status_validacao === 'pendente')
+  .map(normalizeScan)
+```
+
+&emsp;Essa decisão foi suficiente para a integração inicial porque preserva a regra de negócio da task: **somente scans com match positivo e ainda pendentes** aparecem como alerta para validação humana.
+
+## Aprovação e rejeição
+
+&emsp;A ação do operador passa obrigatoriamente pelo endpoint de validação. O frontend não altera mais o estado do card de forma isolada: ele chama o backend, aguarda a resposta e então recarrega a lista.
+
+```js
+await validarScan(selectedScan.id, statusValidacao)
+setSelectedScan(null)
+await loadScans()
+```
+
+<Tabs>
+  <TabItem value="aprovar" label="Aprovar" default>
+
+```js
+await validarScan(scan.id, 'aprovado')
+```
+
+&emsp;Quando isso acontece, o backend atualiza `status_validacao`, preenche `validado_por`, preenche `validado_em` e registra auditoria em `usuarios_scans`.
+
+  </TabItem>
+  <TabItem value="rejeitar" label="Rejeitar">
+
+```js
+await validarScan(scan.id, 'rejeitado')
+```
+
+&emsp;Nesse caso, o fluxo de persistência é o mesmo, mudando apenas o status salvo no banco.
+
+  </TabItem>
+</Tabs>
+
+## Endpoint consumido pelo frontend
+
+&emsp;O endpoint central da integração é o `PATCH /api/scans/{sid}/validar`. A rota do backend permanece protegida por JWT e controle de papel.
+
+```python
+@scans_bp.route('/<string:sid>/validar', methods=['PATCH'])
+@jwt_required()
+@role_required('gestor_remoto', 'gestor_local')
+def validar_scan(sid):
+    data = request.get_json() or {}
+    current_user_id = get_jwt_identity()
+    status = data.get('status_validacao')
+
+    if not status:
+        return jsonify({'message': 'status_validacao é obrigatório'}), 400
+
+    scan = ScanService.validar_scan(sid, status, current_user_id)
+    return jsonify({'message': f"Scan marcado como '{status}'", 'scan': scan}), 200
+```
+
+&emsp;Essa correção foi importante porque a rota estava desalinhada com o service e fazia uma chamada adicional para um método inexistente, o que causava erro `500` após a atualização do banco.
+
+## Confirmados
+
+&emsp;A página `AcceptedVehicles` passou a consumir o backend em vez de depender de estado compartilhado em memória. Nesta etapa, a tela usa a mesma origem de dados (`GET /api/scans/matches`) e aplica o filtro de `status_validacao === "aprovado"`.
+
+```js
+const approved = rawScans
+  .filter((scan) => scan.match === true && scan.status_validacao === 'aprovado')
+  .map(normalizeApprovedScan)
+```
+
+&emsp;Com isso, um scan aprovado deixa a lista de pendentes e passa a ser carregado na tela de confirmados em uma nova consulta ao backend.
+
+## Evidência visual
+
+&emsp;O frontend passou a usar `scan.imagem_url` tanto no modal de alerta quanto nos cards de confirmados. Para caminhos relativos, o arquivo `api.js` monta a URL final com `resolveAssetUrl`.
+
+```js
+export function resolveAssetUrl(path) {
+  if (!path) return ''
+  if (/^https?:\/\//i.test(path)) return path
+  return `${ASSET_BASE_URL}/${String(path).replace(/^\/+/, '')}`
+}
+```
+
+&emsp;Isso resolveu a montagem da URL, mas **não garante a exibição final da imagem** quando o arquivo físico não existe em `uploaded_frames/`. Por isso, a evidência já está integrada no código, mas sua disponibilidade ainda depende do armazenamento real do arquivo.
+
+## Ajuste no backend
+
+&emsp;Antes da integração do frontend, o backend ainda possuía um desalinhamento entre a rota e o service de scans. A rota já chamava `ScanService.validar_scan(...)`, que por sua vez executava a regra de negócio completa, mas logo depois tentava registrar a ação novamente por meio de um método inexistente.
+
+```python
+scan = ScanService.validar_scan(sid, status, current_user_id)
+return jsonify({'message': f"Scan marcado como '{status}'", 'scan': scan}), 200
+```
+
+&emsp;O ajuste consistiu em manter apenas a chamada correta para `ScanService.validar_scan(...)`. Com isso, a API voltou a responder de forma estável após aprovação ou rejeição do scan, sem interromper o fluxo com erro `500`.
+
+## Validação em runtime
+
+&emsp;Depois da correção, o backend foi validado em runtime com ambiente local configurado. O fluxo testado foi o mesmo que o frontend passou a consumir.
+
+| Etapa validada | Resultado |
+| --- | --- |
+| `POST /api/auth/login` | `200 OK`, com retorno de `token` e `role` |
+| `GET /api/scans/matches` | `200 OK`, com scans reais do banco |
+| `PATCH /api/scans/{sid}/validar` com `aprovado` | `200 OK` |
+| `PATCH /api/scans/{sid}/validar` com `rejeitado` | `200 OK` |
+
+&emsp;Além da resposta HTTP, foi confirmada a persistência dos efeitos esperados:
+
+- atualização de `status_validacao`;
+- preenchimento de `validado_por`;
+- preenchimento de `validado_em`;
+- preservação de `imagem_url`;
+- registro da ação em `usuarios_scans`.
+
+## Tela operacional e Leaflet
+
+&emsp;Outra parte da integração da Sprint 3 foi a evolução inicial da tela `OperationsManager`. Nessa etapa, a interface passou a consumir a API de drones e a renderizar o mapa com Leaflet, substituindo a versão visual puramente simulada.
+
+```js
+export async function getDrones() {
+  return request('/drones/?per_page=50')
+}
+```
+
+&emsp;Com isso, a tela operacional passou a depender do retorno real de `/api/drones/` para nome, conectividade, bateria e coordenadas. Quando não há telemetria utilizável, a interface mantém o mapa visível, mas sem apontar para um destino específico e sem inventar dados de drone.
+
+&emsp;Durante essa integração, também foi necessário corrigir o backend de drones. O endpoint de listagem utilizava `RealDictCursor`, mas ainda tentava ler o `COUNT(*)` por índice numérico, o que causava `KeyError: 0`. A correção em `src/backend/app/models/drone_model.py` tornou a resposta compatível com o formato real do cursor e estabilizou o consumo da tela operacional.
+
+## Registro de Varredura
+
+&emsp;Ao longo da integração, a definição funcional do histórico também foi refinada. Em vez de tratar `logs` e `recusados` como uma tela totalmente separada, a decisão atual é concentrar esse histórico em **Registro de Varredura**, reunindo os scans que já passaram por validação humana.
+
+&emsp;Na prática, isso significa que a continuação da Sprint não depende apenas de “criar uma tela de logs”, mas de consolidar uma visualização que represente o histórico de decisões do operador, incluindo tanto itens aceitos quanto rejeitados.
+
+## Próximos passos
+
+- consolidar `Registro de Varredura` como a tela de histórico dos scans aceitos e rejeitados;
+- enriquecer os cards com mais dados vindos do backend, quando necessário;
+- concluir a estratégia de disponibilização dos arquivos de `imagem_url`;
+- reduzir os placeholders visuais que ainda restam em estados vazios;
+- detalhar a integração final da tela operacional à medida que a API de drones evoluir;
+- manter a documentação principal do frontend em [Frontend](./frontend.md) e usar este documento como complemento técnico da integração.

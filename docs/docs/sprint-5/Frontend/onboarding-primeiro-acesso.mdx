@@ -1,0 +1,514 @@
+---
+sidebar_position: 3
+title: Onboarding de Primeiro Acesso
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+export const DecisionCard = ({title, children}) => (
+  <div
+    style={{
+      border: '1px solid var(--ifm-color-emphasis-300)',
+      borderRadius: '8px',
+      padding: '16px',
+      marginBottom: '16px',
+      background: 'var(--ifm-background-surface-color)',
+    }}
+  >
+    <h4 style={{marginTop: 0}}>{title}</h4>
+    <div>{children}</div>
+  </div>
+);
+
+# Onboarding de Primeiro Acesso
+
+## 1. Síntese executiva
+
+&emsp;Nesta Sprint 5, foram implementados dois fluxos de **onboarding de primeiro acesso** para as interfaces operacionais da Pier. O primeiro fluxo orienta o **gestor remoto** na Central de Alertas e nas listas de veículos confirmados e recusados. O segundo fluxo orienta o **gestor local** na tela de Gestor da Operação / Monitoramento Ativo, explicando transmissão de vídeo, telemetria e mapa da operação.
+
+&emsp;A mudança foi produzida para reduzir a fricção no primeiro contato com o sistema. No caso do gestor remoto, o fluxo possui decisões de validação de alerta: identificar um match suspeito, abrir a verificação, aprovar ou recusar, e posteriormente consultar os registros confirmados ou descartados. No caso do gestor local, a tela concentra componentes dinâmicos críticos: vídeo em tempo real, dados de telemetria e mapa Leaflet. O onboarding transforma esses fluxos em experiências guiadas, preservando as telas e regras de negócio já implementadas.
+
+&emsp;A implementação foi feita no frontend existente em **React + Vite**, sem criação de um novo projeto e sem simular telas. Os tours utilizam componentes reais da aplicação, identificados por atributos `data-tour`, e mantêm os pictogramas como imagens importadas, respeitando a restrição de não redesenhar os ícones em JSX, CSS ou SVG inline. Vídeo, telemetria e mapa continuam dinâmicos; as imagens PNG são usadas apenas como prévias dentro dos popups.
+
+## 2. Objetivo da entrega
+
+&emsp;O objetivo principal foi criar camadas de instrução contextual para os dois perfis de gestão, explicando seus fluxos operacionais sem interromper a arquitetura já existente.
+
+| Objetivo | Como foi atendido |
+| --- | --- |
+| Orientar o primeiro acesso | Tour automático salvo em `localStorage` após conclusão ou fechamento. |
+| Explicar o fluxo real | Etapas apontam para cards, ações e modais reais da interface. |
+| Reduzir erro operacional | Textos curtos explicam quando aprovar, recusar e consultar registros. |
+| Preservar a aplicação | Implementação em componentes isolados, sem substituir telas existentes. |
+| Manter identidade visual | Paleta Pier, uso de Inter e composição consistente com o dashboard. |
+
+## 2.1 Separação por perfil
+
+| Perfil | Tela | Quantidade de etapas | Chave de primeiro acesso |
+| --- | --- | --- | --- |
+| Gestor remoto | Central de Alertas, Confirmados e Recusados | 6 | `pier:onboarding-tour-completed` |
+| Gestor local | Gestor da Operação / Monitoramento Ativo | 3 | `pier:local-manager:onboarding:v1` |
+
+&emsp;A separação por perfil evita que o usuário receba instruções de uma área que não faz parte da sua jornada. O gestor remoto aprende o fluxo de validação de alertas. O gestor local aprende a interpretar os elementos de monitoramento operacional.
+
+## 3. Contexto de UX
+
+&emsp;O gestor remoto atua como validador de ocorrências críticas. Ele recebe alertas de possíveis veículos roubados, analisa evidências e decide se o alerta deve ser confirmado ou descartado. Essa jornada tem impacto operacional direto, porque uma aprovação move o registro para veículos confirmados, enquanto uma recusa preserva o histórico em outra área da interface.
+
+&emsp;A decisão de criar um onboarding foi baseada em três problemas de experiência:
+
+- o fluxo depende de múltiplas telas, mas o usuário precisa entender a sequência como uma operação única;
+- os cards possuem muitos dados condensados, o que pode gerar dúvida sobre onde clicar no primeiro uso;
+- as ações de aceitar e recusar são críticas, então precisam ser contextualizadas antes do uso real.
+
+&emsp;A solução escolhida foi um tour progressivo com seis etapas, porque ele acompanha a jornada natural do gestor:
+
+```text
+Central de Alertas
+  ↓
+Verificação do Alerta
+  ↓
+Veículos Confirmados
+  ↓
+Detalhes do Confirmado
+  ↓
+Veículos Recusados
+  ↓
+Detalhes do Recusado
+```
+
+## 4. Decisões de UX
+
+<DecisionCard title="Destaque contextual em vez de tutorial separado">
+  <div>
+    O onboarding foi desenhado sobre a própria interface, destacando elementos reais com overlay escuro,
+    área iluminada, bolha numerada e seta conectora. Essa decisão evita criar uma tela de ajuda isolada
+    e permite que o usuário aprenda no mesmo contexto em que executará a tarefa.
+  </div>
+</DecisionCard>
+
+<DecisionCard title="Componentes dinâmicos preservados no gestor local">
+  <div>
+    No tour do Gestor da Operação, transmissão de vídeo, telemetria e mapa continuam componentes reais.
+    As imagens PNG aparecem somente dentro do popup como prévias de orientação. Essa decisão evita transformar
+    estados dinâmicos da operação em capturas estáticas.
+  </div>
+</DecisionCard>
+
+<DecisionCard title="Seis etapas alinhadas à jornada operacional">
+  <div>
+    O tour não explica componentes genéricos do sistema. Ele segue a sequência do trabalho do gestor:
+    encontrar alerta, abrir verificação, entender aprovados, consultar detalhe, entender recusados e
+    consultar detalhe do recusado.
+  </div>
+</DecisionCard>
+
+<DecisionCard title="Popover padronizado em todas as etapas">
+  <div>
+    A caixa branca mantém a mesma hierarquia visual em todos os passos: badge de progresso, botão de fechar,
+    prévia da tela, título, três instruções com pictogramas, divisor, botões de navegação e pontos de progresso.
+    Essa repetição reduz carga cognitiva.
+  </div>
+</DecisionCard>
+
+<DecisionCard title="Pictogramas como imagem importada">
+  <div>
+    Os pictogramas foram mantidos como arquivos de imagem, não como SVG inline ou desenhos em JSX. Isso preserva
+    a consistência dos assets e evita divergência visual entre documentação, protótipo e implementação.
+  </div>
+</DecisionCard>
+
+## 5. Arquitetura da implementação
+
+&emsp;A implementação separa configuração, estado e apresentação. Essa divisão foi escolhida para evitar que o fluxo de onboarding ficasse acoplado às telas de negócio.
+
+```text title="Onboarding do gestor remoto"
+src/frontend/src/
+├── components/
+│   └── onboarding/
+│       ├── OnboardingTour.jsx
+│       ├── TourPopover.jsx
+│       ├── TourConnector.jsx
+│       ├── TourProgress.jsx
+│       └── onboarding.css
+├── config/
+│   └── onboardingSteps.js
+└── hooks/
+    └── useOnboardingTour.js
+```
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `onboardingSteps.js` | Declara as seis etapas, textos, imagens, alvo e tela de destino. |
+| `useOnboardingTour.js` | Controla abertura, avanço, retorno, fechamento e persistência do primeiro acesso. |
+| `OnboardingTour.jsx` | Mede o alvo real, posiciona overlay, highlight, popover, bolha e conector. |
+| `TourPopover.jsx` | Renderiza a caixa branca com prévia, título, instruções, botões e progresso. |
+| `TourConnector.jsx` | Desenha a seta dinâmica entre popover e elemento destacado. |
+| `TourProgress.jsx` | Renderiza os seis pontos de progresso. |
+| `onboarding.css` | Centraliza paleta, responsividade e estilos visuais do tour. |
+
+&emsp;Após a implementação do fluxo remoto, foi adicionado um segundo conjunto para o gestor local:
+
+```text title="Onboarding do gestor local"
+src/frontend/src/
+├── components/
+│   └── onboarding/
+│       ├── LocalManagerTour.jsx
+│       ├── TourSpotlight.jsx
+│       └── localManagerTour.css
+├── config/
+│   └── localManagerTourSteps.js
+└── hooks/
+    └── useLocalManagerTour.js
+```
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `localManagerTourSteps.js` | Declara as três etapas do Gestor da Operação: vídeo, telemetria e mapa. |
+| `useLocalManagerTour.js` | Controla primeiro acesso com a chave `pier:local-manager:onboarding:v1` e permite reinício com `?tour=1`. |
+| `LocalManagerTour.jsx` | Mede os alvos reais, controla foco, teclado, overlay, spotlight, popover, caret e seta conectora. |
+| `TourSpotlight.jsx` | Renderiza o contorno rosa e a bolha numerada do alvo atual. |
+| `localManagerTour.css` | Define a paleta, layout desktop/mobile e responsividade do popup do gestor local. |
+
+## 6. Fluxo de estado em React
+
+&emsp;O onboarding é controlado por um hook específico, usado em `App.jsx`. Ele só é habilitado nas telas do gestor remoto (`alerts`, `accepted` e `rejected`) e não interfere na tela de login ou no gestor local.
+
+```jsx title="src/frontend/src/App.jsx"
+const PIER_SCREENS = ['alerts', 'accepted', 'rejected']
+
+export default function App() {
+  const [screen, setScreen] = useState(...)
+  const isPierScreen = PIER_SCREENS.includes(screen)
+  const tour = useOnboardingTour(setScreen, isPierScreen)
+
+  return (
+    <>
+      {screen === 'alerts' && (
+        <AlertCenter activeTourStep={tour.isOpen ? tour.step : null} />
+      )}
+
+      <OnboardingTour
+        isOpen={tour.isOpen && isPierScreen}
+        step={tour.step}
+        stepIndex={tour.stepIndex}
+        totalSteps={tour.totalSteps}
+        onPrevious={tour.previous}
+        onNext={tour.next}
+        onClose={tour.close}
+      />
+    </>
+  )
+}
+```
+
+&emsp;A persistência do primeiro acesso usa `localStorage`, porque a necessidade da Sprint era controlar a experiência no navegador do usuário sem alterar contrato de backend ou banco de dados.
+
+```js title="src/frontend/src/hooks/useOnboardingTour.js"
+const STORAGE_KEY = 'pier:onboarding-tour-completed'
+
+function finish() {
+  localStorage.setItem(STORAGE_KEY, 'true')
+  setIsOpen(false)
+}
+```
+
+&emsp;Para testar novamente o primeiro acesso, a marca pode ser removida no console do navegador:
+
+```js
+localStorage.removeItem('pier:onboarding-tour-completed')
+location.reload()
+```
+
+## 7. Configuração declarativa das etapas
+
+&emsp;A configuração das etapas foi mantida fora dos componentes visuais. Com isso, os textos, imagens, ícones, seletor de alvo e tela de destino ficam em um único ponto de manutenção.
+
+```js title="src/frontend/src/config/onboardingSteps.js"
+{
+  id: 'central-alertas',
+  page: 'alerts',
+  title: 'Central de Alertas',
+  preview: step01Preview,
+  targetSelector: '[data-tour="alert-card-first"]',
+  placement: 'bottom',
+  bullets: [
+    'Aqui aparecem os matches suspeitos identificados pelo sistema.',
+    'Cada card mostra placa, horário, localização, modelo e cor.',
+    'Selecione um card para abrir a verificação detalhada.',
+  ],
+  icons: [bellIcon, carIcon, cursorIcon],
+}
+```
+
+&emsp;Os alvos são marcados nas telas reais com `data-tour`, evitando seletores frágeis baseados em classe visual ou posição na árvore DOM.
+
+```jsx
+<div data-tour="alert-card-first">
+  ...
+</div>
+```
+
+## 8. Etapas documentadas
+
+&emsp;As imagens abaixo registram as seis instruções implementadas para o primeiro acesso do gestor remoto. Cada uma representa uma etapa do fluxo de decisão.
+
+<Tabs>
+  <TabItem value="central" label="1. Central de Alertas" default>
+    <div>
+      A primeira etapa apresenta a área em que aparecem os matches suspeitos identificados pelo sistema.
+      O objetivo é ensinar que o card é o ponto de partida da análise.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-1-central-de-alerta.png" alt="Onboarding da Central de Alertas" />
+  </TabItem>
+  <TabItem value="verificacao" label="2. Verificação">
+    <div>
+      A segunda etapa abre a verificação do alerta e direciona o usuário para a decisão operacional de
+      aceitar ou recusar o registro.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-2-verificacao-de-alerta.png" alt="Onboarding da verificação de alerta" />
+  </TabItem>
+  <TabItem value="confirmados" label="3. Confirmados">
+    <div>
+      A terceira etapa mostra a lista de veículos confirmados, reforçando que os alertas aprovados passam
+      a compor essa tela.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-3-veiculos-confirmados.png" alt="Onboarding de veículos confirmados" />
+  </TabItem>
+  <TabItem value="detalhe-confirmado" label="4. Detalhe confirmado">
+    <div>
+      A quarta etapa explica a consulta detalhada de um veículo confirmado, com imagem ampliada e dados
+      usados para auditoria.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-4-detalhes-confirmados.png" alt="Onboarding dos detalhes de veículo confirmado" />
+  </TabItem>
+  <TabItem value="recusados" label="5. Recusados">
+    <div>
+      A quinta etapa apresenta a tela de veículos recusados, separando registros descartados dos confirmados.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-5-veiculos-recusados.png" alt="Onboarding de veículos recusados" />
+  </TabItem>
+  <TabItem value="detalhe-recusado" label="6. Detalhe recusado">
+    <div>
+      A sexta etapa fecha o fluxo mostrando o detalhe de um alerta recusado, preservando rastreabilidade
+      mesmo quando a ocorrência é descartada.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-6-detalhes-recusados.png" alt="Onboarding dos detalhes de veículo recusado" />
+  </TabItem>
+</Tabs>
+
+## 8.1 Etapas do Gestor da Operação
+
+&emsp;O onboarding do gestor local possui exatamente três etapas. Ele foi desenhado para explicar a tela **Gestor da Operação / Monitoramento Ativo** sem substituir seus elementos dinâmicos por imagens. O vídeo continua sendo o componente real de transmissão, os cards continuam recebendo dados reais de telemetria e o mapa continua sendo renderizado pelo provedor já usado na aplicação.
+/home/lorena/g03:
+
+
+<Tabs>
+  <TabItem value="local-video" label="1. Transmissão" default>
+    <div>
+      A primeira etapa destaca a área de transmissão. Quando o servidor ou o drone não estão disponíveis,
+      o próprio componente real apresenta o estado de ausência de sinal, mantendo o retângulo escuro por CSS
+      e preservando o fluxo de reconexão.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-7-Transmissao.png" alt="Onboarding da transmissão de vídeo do gestor local" />
+  </TabItem>
+  <TabItem value="local-telemetry" label="2. Telemetria">
+    <div>
+      A segunda etapa destaca o agrupamento completo dos três cards de telemetria: Drone ID, Conectividade
+      e Bateria. O objetivo é explicar a leitura conjunta do equipamento, do enlace e da segurança da missão.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-8-Telemetria.png" alt="Onboarding dos dados de telemetria do gestor local" />
+  </TabItem>
+  <TabItem value="local-map" label="3. Mapa">
+    <div>
+      A terceira etapa destaca o mapa real da operação. Antes de posicionar o popup, o tour rola até o mapa
+      com `scrollIntoView`, recalcula as medidas e preserva zoom, tiles e interatividade do componente Leaflet.
+    </div>
+    <img src="/img/sprint-5/instrucoes/instrucao-9-Mapa.png" alt="Onboarding do mapa da operação do gestor local" />
+  </TabItem>
+</Tabs>
+
+## 9. Componentes visuais produzidos por código
+
+&emsp;A camada visual do tour é criada por React e CSS, enquanto os pictogramas são carregados como imagens. Essa separação foi importante para cumprir a restrição de assets e, ao mesmo tempo, permitir elementos dinâmicos como overlay, highlight e conector.
+
+| Elemento | Origem |
+| --- | --- |
+| Overlay escuro | CSS em `onboarding.css` |
+| Área iluminada do alvo | Medição por `getBoundingClientRect()` em `OnboardingTour.jsx` |
+| Popover branco | `TourPopover.jsx` |
+| Badge `PASSO X DE 6` | `TourPopover.jsx` |
+| Pontos de progresso | `TourProgress.jsx` |
+| Bolha numerada | `OnboardingTour.jsx` |
+| Setas dos botões | Texto/elemento inline no botão |
+| Seta conectora | SVG dinâmico em `TourConnector.jsx` |
+| Pictogramas | Imagens importadas de `src/frontend/img/onboarding/icons` |
+| Prévias das telas | Imagens importadas de `src/frontend/img/onboarding/previews` |
+
+&emsp;No gestor local, os mesmos princípios foram mantidos, mas com três etapas e uma chave de persistência própria:
+
+| Elemento | Origem |
+| --- | --- |
+| Overlay, popup, borda, sombra e caret | `localManagerTour.css` |
+| Spotlight e bolha numerada | `TourSpotlight.jsx` |
+| Seta conectora | SVG dinâmico em `LocalManagerTour.jsx` |
+| Foco, Escape e setas do teclado | `LocalManagerTour.jsx` |
+| Pictogramas | Imagens importadas de `src/frontend/img/onboarding/icons` |
+| Prévias de vídeo, telemetria e mapa | Imagens importadas de `src/frontend/img/onboarding/previews` |
+| Estado de primeiro acesso | `useLocalManagerTour.js` |
+
+## 9.1 Alvos reais do gestor local
+
+&emsp;Os três alvos foram marcados diretamente na tela `OperationsManager.jsx`, sem seletores por posição, classes geradas ou duplicação visual:
+
+```jsx title="src/frontend/src/screens/OperationsManager.jsx"
+<div data-tour="local-video">
+  ...
+</div>
+
+<div data-tour="local-telemetry">
+  ...
+</div>
+
+<div data-tour="local-map">
+  ...
+</div>
+```
+
+&emsp;Essa marcação permite que o tour acompanhe alterações de layout, carregamento de dados e mudanças de tamanho da tela. No caso do mapa, a medição ocorre depois do scroll, sem reinicializar o Leaflet e sem alterar o zoom atual.
+
+## 10. Responsividade e posicionamento
+
+&emsp;O posicionamento do popover é calculado em tempo de execução a partir do alvo real. A implementação mede o elemento destacado, adiciona margem visual e posiciona a caixa conforme o `placement` configurado.
+
+```text
+targetSelector
+  ↓
+document.querySelector(...)
+  ↓
+getBoundingClientRect()
+  ↓
+overlay + highlight + bubble + connector + popover
+```
+
+&emsp;A decisão de medir o DOM em vez de fixar coordenadas evita que o tour quebre em diferentes resoluções ou quando o conteúdo da tela muda por causa dos dados vindos da API. Em telas menores, o popover troca para uma composição de coluna única e respeita limites de viewport.
+
+## 11. Integração com modais reais
+
+&emsp;Algumas etapas dependem de modais que só aparecem após interação do usuário. Para manter o tour sobre a interface real, as telas recebem `activeTourStep` e abrem o primeiro item disponível quando a etapa exige detalhe.
+
+```jsx title="src/frontend/src/screens/AlertCenter.jsx"
+useEffect(() => {
+  if (!activeTourStep) {
+    return
+  }
+
+  if (activeTourStep.openMode === 'alert-decision' && scans[0]) {
+    setSelectedScan(scans[0])
+    return
+  }
+
+  if (selectedScan && activeTourStep.openMode !== 'alert-decision') {
+    setSelectedScan(null)
+  }
+}, [activeTourStep, scans, selectedScan])
+```
+
+&emsp;Essa escolha evita uma simulação visual do modal. O usuário vê a mesma tela que usará depois do onboarding, com os mesmos componentes e regras já existentes.
+
+## 12. Paleta e linguagem visual
+
+&emsp;A paleta do tour foi definida com variáveis CSS para manter consistência e facilitar manutenção:
+
+```css title="src/frontend/src/components/onboarding/onboarding.css"
+:root {
+  --tour-navy: #1A1F36;
+  --tour-pink: #FF3465;
+  --tour-blush: #FFF1F4;
+  --tour-border: #FFD0DA;
+  --tour-muted: #697386;
+  --tour-background: #FFFFFF;
+  --tour-overlay: rgba(26, 31, 54, 0.62);
+}
+```
+
+&emsp;O `navy` mantém proximidade com a identidade do dashboard, o `pink` cria destaque para progresso e ação, e o `blush` reduz agressividade visual nos pictogramas. O popover usa fundo branco, borda suave e sombra, preservando legibilidade sobre o overlay.
+
+## 13. Validação técnica
+
+&emsp;A validação local foi feita com o build do frontend:
+
+```bash
+cd src/frontend
+npm run build
+```
+
+&emsp;Resultado observado:
+
+```text
+vite build
+✓ built
+```
+
+&emsp;Também foi iniciado o servidor Vite para checar a renderização inicial:
+
+```bash
+cd src/frontend
+npm run dev
+```
+
+&emsp;Durante a verificação local, o frontend carregou corretamente. Quando o backend não estava ativo, o Vite registrou erro de proxy para `127.0.0.1:5000`, comportamento esperado porque as telas dependem das APIs Flask para popular os cards reais.
+
+## 14. Como testar o onboarding
+
+&emsp;Para testar o fluxo do gestor remoto como primeiro acesso:
+
+1. Inicie o backend Flask.
+2. Inicie o frontend Vite.
+3. Acesse `http://localhost:5173`.
+4. Faça login como gestor remoto.
+5. Caso o onboarding já tenha sido concluído, remova a marca local no console do navegador:
+
+```js
+localStorage.removeItem('pier:onboarding-tour-completed')
+location.reload()
+```
+
+&emsp;Ao recarregar, o tour deve abrir automaticamente na Central de Alertas e avançar pelas seis etapas.
+
+&emsp;Para testar o fluxo do gestor local como primeiro acesso:
+
+1. Inicie o backend Flask.
+2. Inicie o frontend Vite.
+3. Faça login com um usuário de papel `gestor_local`.
+4. Acesse a tela `Gestor da Operação / Monitoramento Ativo`.
+5. Caso o onboarding já tenha sido concluído ou dispensado, remova apenas a marca do tour local:
+
+```js
+localStorage.removeItem('pier:local-manager:onboarding:v1')
+location.reload()
+```
+
+&emsp;Também é possível reiniciar o onboarding local sem apagar dados do navegador usando:
+
+```text
+http://localhost:5173/?tour=1
+```
+
+&emsp;O parâmetro `?tour=1` apenas reinicia o onboarding. Ele não apaga autenticação, não apaga o token e não remove outros dados do `localStorage`.
+
+## 15. Rastreabilidade da entrega
+
+| Decisão | Evidência na implementação | Benefício |
+| --- | --- | --- |
+| Tour como camada global | `OnboardingTour` renderizado em `App.jsx` | Mantém o fluxo entre telas sem duplicar lógica. |
+| Configuração declarativa | `onboardingSteps.js` | Facilita editar textos, imagens e alvos. |
+| Alvos por `data-tour` | Cards e modais marcados nas telas | Evita seletores frágeis. |
+| Persistência no navegador | `localStorage` | Não altera backend nem banco de dados. |
+| Imagens importadas pelo Vite | Assets em `src/frontend/img/onboarding` | Não depende de `public` e entra no bundle. |
+| Modais reais no tour | `activeTourStep` abre o primeiro item carregado | Evita telas falsas ou duplicadas. |
+| Tour local separado | `LocalManagerTour` renderizado apenas em `screen === 'operations'` | Evita misturar jornada do gestor remoto com gestor local. |
+| Persistência local independente | `pier:local-manager:onboarding:v1` | Permite concluir ou dispensar o tour local sem afetar o tour remoto. |
+| Mapa real preservado | `data-tour="local-map"` no container do `MapPreview` | Mantém Leaflet interativo e evita prévia estática fora do popup. |
+| Vídeo e telemetria reais | `data-tour="local-video"` e `data-tour="local-telemetry"` | Preserva estados de sinal, bateria, conectividade e carregamento. |

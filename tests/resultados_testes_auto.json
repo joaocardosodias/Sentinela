@@ -1,0 +1,400 @@
+{
+  "dataset": {
+    "imagens": 50,
+    "dir": "C:\\Users\\roque\\OneDrive\\Documents\\Faculdade\\Inteli\\Modulo6\\prog\\g03\\dataset_placas"
+  },
+  "TV-01": {
+    "total_imagens": 50,
+    "por_classe": {
+      "adequada": 30,
+      "aceitavel": 20,
+      "inadequada": 0
+    },
+    "percentual_aproveitavel": 100.0,
+    "amostra": [
+      {
+        "arquivo": "placa_000.jpg",
+        "distancia": "perto",
+        "iluminacao": "normal",
+        "nitidez": 2877.3,
+        "brilho": 156.2,
+        "contraste": 101.0,
+        "classe": "adequada"
+      },
+      {
+        "arquivo": "placa_001.jpg",
+        "distancia": "media",
+        "iluminacao": "normal",
+        "nitidez": 5390.5,
+        "brilho": 184.6,
+        "contraste": 89.7,
+        "classe": "adequada"
+      },
+      {
+        "arquivo": "placa_002.jpg",
+        "distancia": "longe",
+        "iluminacao": "normal",
+        "nitidez": 920.1,
+        "brilho": 130.5,
+        "contraste": 91.9,
+        "classe": "adequada"
+      },
+      {
+        "arquivo": "placa_003.jpg",
+        "distancia": "perto",
+        "iluminacao": "escura",
+        "nitidez": 684.5,
+        "brilho": 61.1,
+        "contraste": 37.7,
+        "classe": "aceitavel"
+      },
+      {
+        "arquivo": "placa_004.jpg",
+        "distancia": "media",
+        "iluminacao": "escura",
+        "nitidez": 908.6,
+        "brilho": 49.6,
+        "contraste": 37.1,
+        "classe": "aceitavel"
+      },
+      {
+        "arquivo": "placa_005.jpg",
+        "distancia": "longe",
+        "iluminacao": "escura",
+        "nitidez": 333.7,
+        "brilho": 76.6,
+        "contraste": 26.0,
+        "classe": "aceitavel"
+      },
+      {
+        "arquivo": "placa_006.jpg",
+        "distancia": "perto",
+        "iluminacao": "clara",
+        "nitidez": 2655.0,
+        "brilho": 186.8,
+        "contraste": 79.0,
+        "classe": "adequada"
+      },
+      {
+        "arquivo": "placa_007.jpg",
+        "distancia": "media",
+        "iluminacao": "clara",
+        "nitidez": 2615.8,
+        "brilho": 183.9,
+        "contraste": 81.4,
+        "classe": "adequada"
+      },
+      {
+        "arquivo": "placa_008.jpg",
+        "distancia": "longe",
+        "iluminacao": "clara",
+        "nitidez": 934.9,
+        "brilho": 167.3,
+        "contraste": 70.1,
+        "classe": "adequada"
+      },
+      {
+        "arquivo": "placa_009.jpg",
+        "distancia": "perto",
+        "iluminacao": "normal",
+        "nitidez": 1168.0,
+        "brilho": 129.9,
+        "contraste": 103.0,
+        "classe": "adequada"
+      }
+    ],
+    "criterio": ">= 80% adequada ou aceitavel",
+    "aprovado": true
+  },
+  "TM-01": {
+    "total_imagens": 50,
+    "deteccao_yolo_pct": 66.0,
+    "acuracia_pipeline_pct": 50.0,
+    "acuracia_ocr_isolado_pct": 74.0,
+    "amostra": [
+      {
+        "arquivo": "placa_000.jpg",
+        "gt": "RAG3E76",
+        "distancia": "perto",
+        "iluminacao": "normal",
+        "yolo_detectou": true,
+        "pipeline_pred": "RAG3E76",
+        "pipeline_ok": true,
+        "ocr_pred": "RAG3E76",
+        "ocr_ok": true
+      },
+      {
+        "arquivo": "placa_001.jpg",
+        "gt": "AFM0165",
+        "distancia": "media",
+        "iluminacao": "normal",
+        "yolo_detectou": true,
+        "pipeline_pred": "AFM0165",
+        "pipeline_ok": true,
+        "ocr_pred": "AFM0165",
+        "ocr_ok": true
+      },
+      {
+        "arquivo": "placa_002.jpg",
+        "gt": "AVT5J19",
+        "distancia": "longe",
+        "iluminacao": "normal",
+        "yolo_detectou": false,
+        "pipeline_pred": "",
+        "pipeline_ok": false,
+        "ocr_pred": "NVT5J19",
+        "ocr_ok": false
+      },
+      {
+        "arquivo": "placa_003.jpg",
+        "gt": "WPV7593",
+        "distancia": "perto",
+        "iluminacao": "escura",
+        "yolo_detectou": false,
+        "pipeline_pred": "",
+        "pipeline_ok": false,
+        "ocr_pred": "WPV7593",
+        "ocr_ok": true
+      },
+      {
+        "arquivo": "placa_004.jpg",
+        "gt": "WPT0Y22",
+        "distancia": "media",
+        "iluminacao": "escura",
+        "yolo_detectou": true,
+        "pipeline_pred": "",
+        "pipeline_ok": false,
+        "ocr_pred": "",
+        "ocr_ok": false
+      },
+      {
+        "arquivo": "placa_005.jpg",
+        "gt": "LWD3676",
+        "distancia": "longe",
+        "iluminacao": "escura",
+        "yolo_detectou": false,
+        "pipeline_pred": "",
+        "pipeline_ok": false,
+        "ocr_pred": "LWD3676",
+        "ocr_ok": true
+      },
+      {
+        "arquivo": "placa_006.jpg",
+        "gt": "FLG8H68",
+        "distancia": "perto",
+        "iluminacao": "clara",
+        "yolo_detectou": true,
+        "pipeline_pred": "FLG8468",
+        "pipeline_ok": false,
+        "ocr_pred": "FLG8468",
+        "ocr_ok": false
+      },
+      {
+        "arquivo": "placa_007.jpg",
+        "gt": "KBY5724",
+        "distancia": "media",
+        "iluminacao": "clara",
+        "yolo_detectou": true,
+        "pipeline_pred": "KBY5724",
+        "pipeline_ok": true,
+        "ocr_pred": "KBY5724",
+        "ocr_ok": true
+      },
+      {
+        "arquivo": "placa_008.jpg",
+        "gt": "DUN9P83",
+        "distancia": "longe",
+        "iluminacao": "clara",
+        "yolo_detectou": false,
+        "pipeline_pred": "",
+        "pipeline_ok": false,
+        "ocr_pred": "",
+        "ocr_ok": false
+      },
+      {
+        "arquivo": "placa_009.jpg",
+        "gt": "BCR7403",
+        "distancia": "perto",
+        "iluminacao": "normal",
+        "yolo_detectou": true,
+        "pipeline_pred": "",
+        "pipeline_ok": false,
+        "ocr_pred": "",
+        "ocr_ok": false
+      }
+    ],
+    "criterio": "acuracia >= 80% (RNF-04)",
+    "obs": "dataset sintetico renderizado; o YOLO26 foi treinado com placas reais, entao a etapa de deteccao pode subperformar em imagens sinteticas",
+    "aprovado_pipeline": false,
+    "aprovado_ocr": false
+  },
+  "TV-02": {
+    "tarefas": [
+      {
+        "tarefa": "login do operador",
+        "duracao_s": 0.288,
+        "sucesso": true,
+        "detalhe": "token emitido"
+      },
+      {
+        "tarefa": "acessar Central de Alertas (GET /scans/pendentes)",
+        "duracao_s": 0.06,
+        "sucesso": true,
+        "detalhe": "4 scans pendentes"
+      },
+      {
+        "tarefa": "localizar alertas pendentes",
+        "duracao_s": 0.0,
+        "sucesso": true,
+        "detalhe": "2/2 alertas de teste localizados"
+      },
+      {
+        "tarefa": "visualizar informacoes do alerta",
+        "duracao_s": 0.179,
+        "sucesso": true,
+        "detalhe": {
+          "campos": {
+            "placa": "TV2T001",
+            "data_hora": "2026-06-12 23:07:43",
+            "imagem": "uploaded_frames/teste/tv02.jpg",
+            "zona": "Base Principal"
+          },
+          "faltando": []
+        }
+      },
+      {
+        "tarefa": "aprovar alerta 1",
+        "duracao_s": 0.185,
+        "sucesso": true,
+        "detalhe": "HTTP 200"
+      },
+      {
+        "tarefa": "rejeitar alerta 2",
+        "duracao_s": 0.164,
+        "sucesso": true,
+        "detalhe": "HTTP 200"
+      }
+    ],
+    "tempo_total_s": 0.876,
+    "criterio": "fluxo completo em ate 180 s com todas as tarefas concluidas e informacoes completas (substitui questionario de satisfacao)",
+    "aprovado": true
+  },
+  "TV-03": {
+    "estado_conectado_observado": {
+      "status_voo": "em_voo",
+      "bateria": 90,
+      "conectividade": "WiFi"
+    },
+    "cenario_A_telemetria_interrompida": {
+      "detectado_em_60s": false,
+      "tempo_s": null,
+      "achado": "o backend nao registra timestamp de telemetria (last_seen) nem marca drones como offline automaticamente; sem acao do proprio drone, a interface continua exibindo o ultimo estado conhecido"
+    },
+    "cenario_B_drone_reporta_offline": {
+      "detectado_em_30s": true,
+      "tempo_s": 0.0
+    },
+    "criterio": "estado de desconexao identificavel pelos dados da interface em ate 30 s",
+    "aprovado": false
+  },
+  "TM-04": {
+    "medicoes": [
+      {
+        "arquivo": "placa_000.jpg",
+        "placa": "RAG3E76",
+        "leitura_cv_real": true,
+        "tempo_cv_s": 1.676,
+        "tempo_total_s": 1.874,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_001.jpg",
+        "placa": "AFM0165",
+        "leitura_cv_real": true,
+        "tempo_cv_s": 0.646,
+        "tempo_total_s": 0.836,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_002.jpg",
+        "placa": "AVT5J19",
+        "leitura_cv_real": false,
+        "tempo_cv_s": 0.068,
+        "tempo_total_s": 0.343,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_003.jpg",
+        "placa": "WPV7593",
+        "leitura_cv_real": false,
+        "tempo_cv_s": 0.061,
+        "tempo_total_s": 0.345,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_004.jpg",
+        "placa": "WPT0Y22",
+        "leitura_cv_real": false,
+        "tempo_cv_s": 0.833,
+        "tempo_total_s": 1.073,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_005.jpg",
+        "placa": "LWD3676",
+        "leitura_cv_real": false,
+        "tempo_cv_s": 0.092,
+        "tempo_total_s": 0.252,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_006.jpg",
+        "placa": "FLG8468",
+        "leitura_cv_real": true,
+        "tempo_cv_s": 1.545,
+        "tempo_total_s": 1.761,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_007.jpg",
+        "placa": "KBY5724",
+        "leitura_cv_real": true,
+        "tempo_cv_s": 0.809,
+        "tempo_total_s": 0.992,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_008.jpg",
+        "placa": "DUN9P83",
+        "leitura_cv_real": false,
+        "tempo_cv_s": 0.106,
+        "tempo_total_s": 0.371,
+        "scan_criado": true
+      },
+      {
+        "arquivo": "placa_009.jpg",
+        "placa": "BCR7403",
+        "leitura_cv_real": false,
+        "tempo_cv_s": 1.955,
+        "tempo_total_s": 2.197,
+        "scan_criado": true
+      }
+    ],
+    "mediana_s": 0.914,
+    "media_s": 1.004,
+    "max_s": 2.197,
+    "min_s": 0.252,
+    "criterio": "mediana <= 5 s; nenhum caso > 8 s",
+    "obs": "captura do drone substituida por leitura de imagem estatica (cv2.imread), conforme modo de teste previsto no relatorio",
+    "aprovado": true
+  },
+  "TM-06": {
+    "n_amostras": 113,
+    "latencia_media_s": 0.039,
+    "latencia_max_s": 0.044,
+    "latencia_min_s": 0.037,
+    "criterio": "latencia media < 5 s",
+    "obs": "feed do drone substituido por servidor MJPEG local a 30 fps com timestamp binario embutido nos frames; consumo via cv2.VideoCapture com descarte de buffer identico ao drone.py",
+    "aprovado": true
+  }
+}

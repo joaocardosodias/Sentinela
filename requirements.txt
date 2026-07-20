@@ -1,0 +1,33 @@
+typer[all]
+requests
+rich
+opencv-python>=4.8.0
+easyocr
+paddleocr; python_version < "3.13"
+paddlepaddle; python_version < "3.13"
+ultralytics
+easyocr
+aiortc>=1.9.0
+aiohttp>=3.9.0
+aiohttp-cors>=0.8.0
+av>=14.0.0,<17.0.0
+blinker==1.9.0
+click==8.3.3
+colorama==0.4.6
+flasgger==0.9.7.1
+Flask==3.1.3
+flask-jwt-extended==4.7.3
+itsdangerous==2.2.0
+Jinja2==3.1.6
+jsonschema==4.26.0
+MarkupSafe==3.0.3
+mistune==3.2.1
+packaging==26.0
+psycopg2-binary==2.9.12
+PyJWT==2.12.1
+PyYAML==6.0.3
+six==1.17.0
+Werkzeug==3.1.8
+textual
+python-dotenv
+boto3

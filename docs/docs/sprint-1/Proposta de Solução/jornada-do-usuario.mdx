@@ -1,0 +1,109 @@
+---
+sidebar_position: 4
+title: Jornada do Usuário
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Admonition from '@theme/Admonition';
+
+# Jornada do Usuário
+
+
+
+ A Jornada do Usuário descreve o percurso realizado por cada persona ao longo da interação com a solução proposta, 
+considerando suas ações, dificuldades, expectativas e transformações após a implementação do sistema. No contexto deste projeto, 
+a jornada permite compreender como a solução altera o fluxo operacional de recuperação veicular, passando de um processo fragmentado, 
+manual e reativo para um modelo apoiado por captura automatizada de imagens, visão computacional, geolocalização, consulta à base de sinistros da Pier 
+e geração de alertas em tempo real. Dessa forma, esta seção apresenta a experiência de duas das três personas principais: **o Gestor Global da Pier e o Operador de Drone**.
+
+
+## Jornada - Mariana Ribeiro: Gestor Global da Pier
+
+ O Gestor Global da Pier representa a camada estratégica da operação. Sua principal preocupação está relacionada ao acompanhamento dos resultados da solução, especialmente no que diz respeito à recuperação de veículos, redução de custos com indenizações e eficiência operacional.
+
+<div style={{ textAlign: 'center', margin: '1.5rem 0' }}>
+  <div>Figura 1 - Jornada do Gestor Global da Pier</div>
+  <img src="/img/sprint-1/jornadas/Jornada-Maria.png" alt="Jornada do Gestor Global da Pier" />
+  <div>Fonte: Autoria própria (2026).</div>
+</div>
+
+<Tabs>
+<TabItem value="antes-global" label="Antes da Solução">
+
+| Etapa | Descrição |
+|------|-----------|
+| **Contexto** | O gestor depende de informações dispersas, relatórios manuais e dados atualizados com atraso. |
+| **Ação principal** | Analisa indicadores de sinistros e recuperação após o encerramento das operações. |
+| **Dores** | Baixa visibilidade em tempo real, dificuldade de mensurar impacto financeiro e ausência de dados consolidados. |
+| **Consequência** | A tomada de decisão ocorre de maneira tardia, reduzindo a capacidade de atuação dentro da janela crítica de recuperação. |
+
+</TabItem>
+
+<TabItem value="depois-global" label="Com a Solução">
+
+| Etapa | Descrição |
+|------|-----------|
+| **Contexto** | O gestor passa a contar com registros automatizados de placas identificadas, localização e status de sinistro. |
+| **Ação principal** | Acompanha os matches gerados pela consulta automática à API da Pier. |
+| **Ganhos** | Maior visibilidade sobre a operação, dados mais confiáveis e apoio à análise de impacto financeiro. |
+| **Resultado esperado** | Decisões estratégicas mais rápidas e fundamentadas em dados reais da operação. |
+
+</TabItem>
+</Tabs>
+
+:::info 
+Esta jornada está diretamente relacionada aos requisitos **RF4 - Consulta de Sinistros** e **RF5 - Notificação de Match**, pois o gestor depende da identificação automática de ocorrências relevantes para avaliar o desempenho da solução.
+:::
+
+---
+
+## Jornada - Marcos Marcondes: Operador de Drone
+
+ O Operador de Drone representa a camada de execução em campo. Sua atuação está diretamente ligada à captura de imagens das placas de veículos estacionados e à condução segura do equipamento durante as missões.
+
+<div style={{ textAlign: 'center', margin: '1.5rem 0' }}>
+  <div>Figura 2 - Jornada do Operador de Drone</div>
+  <img src="/img/sprint-1/jornadas/Jornada-Marcos.png" alt="Jornada do Operador de Drone" />
+  <div>Fonte: Autoria própria (2026).</div>
+</div>
+
+<Tabs>
+<TabItem value="antes-operador" label="Antes da Solução">
+
+| Etapa | Descrição |
+|------|-----------|
+| **Contexto** | A busca por veículos suspeitos depende de observação manual, deslocamento físico e inspeção visual em áreas de risco. |
+| **Ação principal** | O operador ou equipe de campo precisa se aproximar dos veículos para verificar placas e possíveis indícios. |
+| **Dores** | Exposição a riscos, baixa eficiência em áreas de difícil acesso e possibilidade de erro humano na identificação. |
+| **Consequência** | A operação se torna lenta, insegura e dependente da percepção individual dos agentes em campo. |
+
+</TabItem>
+
+<TabItem value="depois-operador" label="Com a Solução">
+
+| Etapa | Descrição |
+|------|-----------|
+| **Contexto** | O drone realiza a captura de imagens nítidas das placas em locais de difícil acesso. |
+| **Ação principal** | O operador conduz o drone enquanto o sistema registra imagens e permite o processamento das placas por visão computacional. |
+| **Ganhos** | Redução da exposição física, maior alcance visual e aumento da precisão na coleta de dados. |
+| **Resultado esperado** | Operações mais seguras, rápidas e baseadas em evidências capturadas automaticamente. |
+
+</TabItem>
+</Tabs>
+
+:::info 
+Esta jornada está relacionada aos requisitos **RF1 - Captura de Imagem**, **RF2 - Visão Computacional** e **RF3 - Geolocalização**, pois o operador viabiliza a coleta inicial dos dados utilizados pelo sistema.
+:::
+
+## Conclusão
+
+ A análise das jornadas evidencia que a solução proposta não atua apenas como uma ferramenta tecnológica, mas como um elemento de transformação do fluxo de recuperação veicular. Ao integrar captura de imagem, visão computacional, geolocalização, consulta automática de sinistros e notificação de matches, o sistema reduz o intervalo entre a identificação de um veículo e a tomada de decisão operacional.
+
+ Desse modo, a jornada do usuário complementa as User Stories ao demonstrar como cada requisito funcional impacta a experiência das personas. Enquanto as User Stories descrevem as necessidades e funcionalidades esperadas, a Jornada do Usuário evidencia a mudança prática gerada pela solução no cotidiano de cada perfil envolvido.
+
+
+
+<Admonition type="tip" title="Síntese">
+  A Jornada do Usuário demonstra a passagem de uma operação reativa, manual e fragmentada para uma operação orientada por dados, com maior velocidade, rastreabilidade e segurança.
+</Admonition>

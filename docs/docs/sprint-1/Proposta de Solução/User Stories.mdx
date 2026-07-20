@@ -1,0 +1,168 @@
+---
+sidebar_position: 3
+title: User Stories
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Admonition from '@theme/Admonition';
+
+# User Stories
+
+
+ Após a definição das [Personas](<personas.mdx>), torna-se necessário identificar as principais funcionalidades que devem estar presentes na aplicação para atender às suas necessidades. Nesse contexto, as User Stories são fundamentais para traduzir as necessidades dos usuários em requisitos claros e orientados ao valor.
+
+ Neste projeto, as User Stories foram elaboradas com base nos requisitos funcionais da solução, considerando a captura de imagens por drone, extração de placas por visão computacional, associação com geolocalização, consulta automática à API da Pier, geração de alertas em caso de correspondência com sinistros e proteção de dados sensíveis.
+
+
+## User Stories - Mariana Ribeiro: Gestor Global da Pier
+
+ O Gestor Global da Pier representa a persona responsável por acompanhar o impacto estratégico da solução, avaliando se o sistema contribui para a redução de prejuízos com sinistros e para o aumento da recuperação de veículos.
+
+<Tabs>
+<TabItem value="global-01" label="01 - Consulta de Sinistros">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Gestor Global da Pier |
+| **Requisito relacionado** | RF4 - Consulta de Sinistros |
+| **User Story** | "Como gestor global da Pier, quero que o sistema consulte automaticamente a base de sinistros da Pier a partir da placa identificada para verificar se o veículo possui registro de roubo ou furto." |
+| **Critério de aceite 1** | CR1: O sistema deve realizar uma chamada automática à API da Pier sempre que uma placa for identificada com sucesso. |
+| **Critério de aceite 2** | CR2: A resposta da API deve indicar se a placa possui ou não registro ativo de sinistro. |
+| **Critério de aceite 3** | CR3: A consulta deve ocorrer sem necessidade de intervenção manual do gestor. |
+
+</TabItem>
+
+<TabItem value="global-02" label="02 - Indicadores Estratégicos">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Gestor Global da Pier |
+| **Requisito relacionado** | RF4 - Consulta de Sinistros / RF5 - Notificação de Match |
+| **User Story** | "Como gestor global da Pier, quero visualizar registros de placas consultadas e matches encontrados para acompanhar a efetividade da operação de recuperação veicular." |
+| **Critério de aceite 1** | CR1: O sistema deve registrar cada placa consultada, seu status e o horário da verificação. |
+| **Critério de aceite 2** | CR2: O sistema deve permitir a visualização dos casos em que houve correspondência com a base de sinistros. |
+| **Critério de aceite 3** | CR3: Os dados devem apoiar a análise da taxa de sucesso da operação. |
+
+</TabItem>
+</Tabs>
+
+---
+
+## User Stories - Marcos Marcondes: Operador de Drone
+
+ O Operador de Drone representa a persona responsável pela execução das missões em campo. Sua interação com a solução ocorre principalmente por meio do drone e da câmera embarcada, sendo essencial que o sistema consiga capturar imagens adequadas e processá-las corretamente.
+
+<Tabs>
+<TabItem value="operador-01" label="01 - Captura de Imagem">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Operador de Drone |
+| **Requisito relacionado** | RF1 - Captura de Imagem |
+| **User Story** | "Como operador de drone, quero que o sistema capture imagens nítidas das placas dos veículos estacionados para permitir a identificação correta dos automóveis monitorados." |
+| **Critério de aceite 1** | CR1: O sistema deve capturar imagens de placas de veículos por meio da câmera do drone. |
+| **Critério de aceite 2** | CR2: As imagens capturadas devem possuir nitidez suficiente para leitura dos caracteres da placa. |
+| **Critério de aceite 3** | CR3: O sistema deve descartar ou sinalizar imagens com baixa qualidade de leitura. |
+
+</TabItem>
+
+<TabItem value="operador-02" label="02 - Extração da Placa">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Operador de Drone |
+| **Requisito relacionado** | RF2 - Visão Computacional |
+| **User Story** | "Como operador de drone, quero que o sistema extraia automaticamente os caracteres alfanuméricos das placas capturadas para reduzir a necessidade de conferência manual em campo." |
+| **Critério de aceite 1** | CR1: O sistema deve utilizar visão computacional para identificar a região da placa na imagem. |
+| **Critério de aceite 2** | CR2: O sistema deve extrair os caracteres alfanuméricos da placa capturada. |
+| **Critério de aceite 3** | CR3: O sistema deve apresentar ou registrar a placa extraída para posterior consulta. |
+
+</TabItem>
+
+<TabItem value="operador-03" label="03 - Registro com Localização">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Operador de Drone |
+| **Requisito relacionado** | RF3 - Geolocalização |
+| **User Story** | "Como operador de drone, quero que cada placa identificada seja registrada com sua localização exata para permitir que a equipe saiba onde o veículo foi encontrado." |
+| **Critério de aceite 1** | CR1: O sistema deve associar automaticamente latitude e longitude ao registro da placa. |
+| **Critério de aceite 2** | CR2: A localização deve ser capturada no momento da identificação da placa. |
+| **Critério de aceite 3** | CR3: O registro deve conter placa, imagem capturada, horário e coordenadas GPS. |
+
+</TabItem>
+</Tabs>
+
+---
+
+## User Stories - Marcela Santoro: Gestor Local dos Operadores
+
+ O Gestor Local dos Operadores representa a persona responsável por acompanhar a operação no local, supervisionando os operadores de drone e validando se os registros gerados estão corretos, completos e regularizados. Sua interação com a solução ocorre diretamente pela interface web local.
+
+<Tabs>
+<TabItem value="local-01" label="01 - Monitoramento da Captura">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Gestor Local dos Operadores |
+| **Requisito relacionado** | RF1 - Captura de Imagem |
+| **User Story** | "Como gestor local dos operadores, quero visualizar as imagens capturadas pelos drones para verificar se as placas estão legíveis e adequadas para análise." |
+| **Critério de aceite 1** | CR1: A interface deve permitir a visualização das imagens capturadas pela câmera do drone. |
+| **Critério de aceite 2** | CR2: O gestor local deve conseguir identificar se a imagem possui qualidade suficiente para leitura da placa. |
+| **Critério de aceite 3** | CR3: O sistema deve sinalizar imagens que não atendam ao padrão mínimo de nitidez. |
+
+</TabItem>
+
+<TabItem value="local-02" label="02 - Validação da Placa Extraída">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Gestor Local dos Operadores |
+| **Requisito relacionado** | RF2 - Visão Computacional |
+| **User Story** | "Como gestor local dos operadores, quero visualizar a placa extraída automaticamente pelo sistema para validar se a leitura corresponde à imagem capturada." |
+| **Critério de aceite 1** | CR1: O sistema deve exibir a placa extraída por visão computacional junto da imagem original. |
+| **Critério de aceite 2** | CR2: O gestor local deve conseguir comparar visualmente a placa extraída com a imagem capturada. |
+| **Critério de aceite 3** | CR3: O sistema deve permitir identificar registros com leitura duvidosa ou incompleta. |
+
+</TabItem>
+
+<TabItem value="local-03" label="03 - Conferência da Localização">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Gestor Local dos Operadores |
+| **Requisito relacionado** | RF3 - Geolocalização |
+| **User Story** | "Como gestor local dos operadores, quero conferir a localização associada a cada placa identificada para garantir que o registro represente corretamente o ponto onde o veículo foi encontrado." |
+| **Critério de aceite 1** | CR1: Cada registro deve apresentar latitude e longitude associadas à placa identificada. |
+| **Critério de aceite 2** | CR2: A interface deve permitir visualizar a localização do veículo de forma clara. |
+| **Critério de aceite 3** | CR3: O sistema deve armazenar a geolocalização junto ao horário e à imagem da captura. |
+
+</TabItem>
+
+<TabItem value="local-04" label="04 - Alerta de Match">
+
+| Campo | Descrição |
+|------|-----------|
+| **Persona** | Gestor Local dos Operadores |
+| **Requisito relacionado** | RF5 - Notificação de Match |
+| **User Story** | "Como gestor local dos operadores, quero receber alertas imediatos quando uma placa identificada constar na base de sinistros para orientar rapidamente a equipe em campo." |
+| **Critério de aceite 1** | CR1: O sistema deve gerar alerta automático quando houver correspondência entre a placa identificada e a base de sinistros. |
+| **Critério de aceite 2** | CR2: O alerta deve apresentar a placa, a localização exata e o horário da identificação. |
+| **Critério de aceite 3** | CR3: O alerta deve ser exibido de forma destacada na interface local. |
+
+</TabItem>
+
+
+</Tabs>
+
+
+## Conclusão
+
+ As User Stories apresentadas foram estruturadas a partir dos requisitos funcionais da solução, de modo a garantir que cada funcionalidade prevista esteja associada a uma necessidade concreta das personas. Dessa forma, a captura de imagens, a extração automática de placas, a geolocalização, a consulta à base de sinistros da Pier, a emissão de alertas e a proteção de dados sensíveis deixam de ser apenas requisitos técnicos e passam a representar ações diretamente conectadas ao uso real do sistema.
+
+ Essa organização também permite estabelecer uma ponte com a seção de Jornada do Usuário, uma vez que as User Stories indicam o que o sistema deve possibilitar, enquanto a jornada descreve como essas funcionalidades transformam a experiência das personas antes, durante e após a adoção da solução.
+
+<Admonition type="tip" title="Síntese">
+  As User Stories funcionam como a transição entre o entendimento das personas e a construção da jornada do usuário, conectando necessidades humanas, requisitos funcionais e valor operacional.
+</Admonition>
