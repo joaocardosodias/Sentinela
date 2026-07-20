@@ -1,6 +1,7 @@
 import {Redirect} from '@docusaurus/router';
-import {useBaseUrl} from '@docusaurus/useBaseUrl';
+import {useBaseUrlUtils} from '@docusaurus/useBaseUrl';
 
 export default function Home(): JSX.Element {
-  return <Redirect to={useBaseUrl('/solucao')} />;
+  const {withBaseUrl} = useBaseUrlUtils();
+  return <Redirect to={withBaseUrl('/solucao')} />;
 }
