@@ -22,7 +22,7 @@ const config: Config = {
   themes: ['@docusaurus/theme-mermaid'],
 
   url: 'https://g03-76b664.pages.git.inteli.edu.br',
-  baseUrl: '/',
+  baseUrl: '/Sentinela/',
 
   organizationName: 'inteli',
   projectName: 'g03',
